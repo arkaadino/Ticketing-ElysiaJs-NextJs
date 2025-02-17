@@ -1,0 +1,36 @@
+{
+  "name": "ticketing-app",
+  "version": "1.0.50",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "PORT=5000 bun run --watch src/index.ts",
+    "check-db": "bun run src/config/checkDB.ts",
+    "view": "bun run src/config/viewTable.ts",
+    "seed": "bun src/seeders/seed.ts"
+  },
+  "dependencies": {
+    "@elysiajs/cookie": "^0.8.0",
+    "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/jwt": "^1.2.0",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.7",
+    "elysia": "latest",
+    "mysql2": "^3.12.0",
+    "next": "^15.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sequelize": "^6.37.5",
+    "sequelize-typescript": "^2.1.6",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/node": "^22.10.6",
+    "@types/sequelize": "^4.28.20",
+    "@types/supertest": "^6.0.2",
+    "bun-types": "latest",
+    "supertest": "^7.0.0",
+    "typescript": "^5.7.3"
+  },
+  "module": "src/index.js"
+}
