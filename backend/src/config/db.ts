@@ -37,11 +37,11 @@ function setupAssociations() {
 // Panggil relasi setelah Sequelize mengenali model
 setupAssociations();
 
-Karyawan.beforeSave(async (instance: Karyawan) => {
-    if (instance.role === "admin" && instance.password) {
-        instance.password = await Bun.password.hash(instance.password);
-    }
-});
+// Karyawan.beforeSave(async (instance: Karyawan) => {
+//     if (instance.role === "admin" && instance.password) {
+//         instance.password = await Bun.password.hash(instance.password);
+//     }
+// });
 
 
 export async function connectAndSyncDB() {
@@ -49,7 +49,7 @@ export async function connectAndSyncDB() {
         await sequelize.authenticate();
         console.log("✅ Koneksi database berhasil");
 
-        await sequelize.sync();
+        await sequelize.sync()
         console.log("✅ Sinkronisasi model berhasil");
 
     } catch (error) {
@@ -59,6 +59,6 @@ export async function connectAndSyncDB() {
 
 //kalau mau ganti alter table
 //await sequelize.sync({alter:true})
-//await sequelize.sync({force:true})
+// await sequelize.sync({force:true})
 
 export default sequelize;

@@ -6,7 +6,8 @@ import karyawanApi from "./api/karyawanApi";
 import priorityApi from "./api/priorityApi";
 import ticketingApi from "./api/ticketingApi";
 import { connectAndSyncDB } from "./config/db";
-import logserver from "./config/server";
+
+import server from "./config/server";
 import cors from "@elysiajs/cors";
 
 const app = new Elysia();
@@ -16,10 +17,11 @@ app.get("/", () => "BACKEND API");
 app.use(cors({
     origin: "http://localhost:3000", // Allow Next.js frontend
     methods: ["GET", "POST", "PATCH", "DELETE"], // Allowed HTTP methods
-    credentials: true // Allow cookies if needed
+    credentials: true, // Allow cookies if needed
+    allowedHeaders: ["Content-Type", "Authorization"], // ✅ Tambahkan Content-Type agar tidak diblokir
 }));// Use the API routes
 
-app.use(logserver);
+app.use(server);
 app.use(statusesApi);
 app.use(categoriesApi);
 app.use(karyawanApi);

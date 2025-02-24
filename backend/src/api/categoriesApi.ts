@@ -124,6 +124,7 @@ app.delete("/master/categories/:id", async ({error, params}) => {
 
     // Soft delete dengan mengisi deleted_at
     category.deleted_at = new Date();
+    category.is_active = 0;
     await category.save();
 
     return {

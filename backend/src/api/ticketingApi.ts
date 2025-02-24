@@ -90,6 +90,7 @@ app.delete("/master/ticketings/:id", async ({ error, params }) => {
             return error(400, { message: "Tiket tidak ditemukan" });
         }
         ticket.deleted_at = new Date();
+        ticket.is_active = 0;
         await ticket.save();
         return {
             code: 200,

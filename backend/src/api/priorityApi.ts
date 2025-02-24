@@ -111,6 +111,7 @@ app.delete("/master/priority/:id", async ({ error, params }) => {
     }
 
     priority.deleted_at = new Date();
+    priority.is_active = 0;
     await priority.save();
 
     return {

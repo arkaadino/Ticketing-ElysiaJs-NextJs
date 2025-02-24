@@ -2,6 +2,7 @@
   import sequelize from "../config/db";
   import { Elysia } from "elysia";
   import { z } from "zod";
+import { stat } from "fs";
 
   const app = new Elysia();
 
@@ -108,6 +109,7 @@
 
       // Soft delete by setting deleted_at
       status.deleted_at = new Date();
+      status.is_active = 0;
       await status.save();
 
       return {
