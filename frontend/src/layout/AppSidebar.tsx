@@ -37,7 +37,7 @@ const helpdeskItems: NavItem[] = [
   {
     icon: <PageIcon />,
     name: "Ticketing",
-    path: "/ticketings"
+    path: "/ticketing"
   },
 ];
 
@@ -46,9 +46,9 @@ const dataitems: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "Human Resources",
     subItems: [
-      { name: "Employees", path: "/karyawans", pro: false },
-      { name: "Priorities", path: "/karyawans/priorities", pro: false },
-      { name: "Escalation", path: "/karyawans/eskalasi", pro: false },
+      { name: "Karyawan", path: "/karyawan", pro: false },
+      { name: "Prioritas", path: "/karyawan/priorities", pro: false },
+      { name: "Eskalasi", path: "/karyawan/eskalasi", pro: false },
     ],
   },
 

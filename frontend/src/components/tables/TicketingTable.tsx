@@ -111,7 +111,7 @@ const tableData: Order[] = [
   },
 ];
 
-export default function BasicTableOne() {
+export default function TicketingTable() {
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
@@ -124,7 +124,7 @@ export default function BasicTableOne() {
                   isHeader
                   className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                 >
-                  User
+                  No
                 </TableCell>
                 <TableCell
                   isHeader
