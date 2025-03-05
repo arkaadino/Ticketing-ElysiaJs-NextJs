@@ -34,7 +34,7 @@ const authApi = new Elysia({ prefix: "/auth" })
       const token = jwt.sign(
         { id: user.id, nik: user.nik, name: user.name, role: user.role },
         process.env.JWT_SECRET_KEY,
-        { expiresIn: "1h" }
+        { expiresIn: "2h" }
       );
 
       cookie.token.set({
@@ -43,7 +43,7 @@ const authApi = new Elysia({ prefix: "/auth" })
         path: "/",
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60
+        maxAge: 60 * 60 * 2      
       });
 
       return JSON.stringify({ 
@@ -74,21 +74,22 @@ const authApi = new Elysia({ prefix: "/auth" })
     });
   })
 
-  .get("/me", ({ cookie }) => {
+  .get("/me", async ({ cookie }) => {
     try {
-      const token = cookie.token.value;
+      const token = cookie.token?.value;
       if (!token) {
-        return JSON.stringify({ success: false, message: "Tidak ada token" });
+        return Response.json({ success: false, message: "Tidak ada token" }, { status: 401 });
       }
-
+  
       if (!process.env.JWT_SECRET_KEY) {
         throw new Error("JWT_SECRET_KEY is not defined");
       }
-
+  
       const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      return JSON.stringify({ success: true, user: decoded });
+  
+      return Response.json({ success: true, user: decoded }, { status: 200 });
     } catch (error) {
-      return JSON.stringify({ success: false, message: "Token tidak valid atau sudah expired" });
+      return Response.json({ success: false, message: "Token tidak valid atau sudah expired" }, { status: 403 });
     }
   });
 

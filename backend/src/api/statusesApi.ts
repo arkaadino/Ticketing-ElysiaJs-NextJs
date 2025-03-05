@@ -1,126 +1,105 @@
-  import { Status, StatusEntity } from "../models/statuses";
-  import sequelize from "../config/db";
-  import { Elysia } from "elysia";
-  import { z } from "zod";
-import { stat } from "fs";
+import { Elysia } from "elysia";
+import { cors } from "@elysiajs/cors";
+import { Status } from "../models/statuses";
 
-  const app = new Elysia();
+const statusesApi = new Elysia({ prefix: "/statuses" })
+  .use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+  }))
 
-  const StatusesSchema = z.object({
-    name: z.string()
-    .trim()
-    .min(1, "Nama status tidak boleh kosong atau hanya berisi spasi"),
-    is_active: z.number()
-    .min(1, "Status tidak boleh kosong"),
+  // POST - Tambah status baru
+  .post("/", async ({ body, set }: { body: any; set: any }) => {
+    try {
+      const errors: Record<string, string> = {};
+
+      if (!body.name || body.name.trim() === "") {
+        errors.name = "Field name harus diisi dan tidak boleh kosong";
+      }
+
+      if (Object.keys(errors).length) {
+        set.status = 400;
+        return { success: false, message: "Gagal menambahkan status, periksa input!", errors };
+      }
+
+      const newStatus = await Status.create(body);
+      set.status = 200;
+      return { success: true, message: "Status berhasil ditambahkan", data: newStatus };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Terjadi kesalahan server" };
+    }
   })
 
-  app.get("/master/statuses", async ({error}) => {
+  // GET - Ambil semua statuses
+  .get("/", async ({ set }: { set: any }) => {
     try {
-      console.log("📥 Menjalankan query untuk mengambil status...");
-
-      if (!sequelize.isDefined('Status')) {
-        throw new Error('Model Status belum terinisialisasi!');
+      const statusList = await Status.findAll();
+      if (statusList.length === 0) {
+        set.status = 400;
+        return { success: false, message: "Data tidak ditemukan" };
       }
-
-
-      const status = await Status.findAll({
-        where: {
-          is_active: 1,
-        },
-      });
-
-      if (status.length === 0) {
-        return error(400, { message: "Data tidak ditemukan" });
-    }
-
-      console.log("✅ Query berhasil, hasil:", status);
-
-      return {
-        code: 200,
-        message: "Data status ditemukan",
-        data: status, // Return the data array
-      };
+      set.status = 200;
+      return { success: true, message: "Data statuses ditemukan", data: statusList };
     } catch (error) {
-      console.error("❌ Error saat mengambil data:", error);
-      return {
-        code: 500,
-        message: "Data status tidak dapat ditemukan",
-      };
+      set.status = 500;
+      return { success: false, message: "Gagal mengambil data statuses" };
     }
-  });
+  })
 
-
-  app.post("/master/statuses", async ({error, body, params}) => {
+  // GET - Ambil status berdasarkan ID
+  .get("/:id", async ({ params, set }: { params: { id: string }, set: any }) => {
     try {
-      // Check if the request body is JSON
-      const parsed = StatusesSchema.safeParse(body);
-      if (!parsed.success) {
-        return error (400, parsed.error.errors);
-      }
-      
-      const status = await Status.create(parsed.data);
-
-      return {
-        code: 200,
-        message: "Data status berhasil ditambahkan",
-        data: status,  // Return the newly created status data
-      };
-    } catch (error) {
-      console.error("❌ Error saat menambahkan data status:", error);
-      return {
-        code: 500,
-        message: "Gagal menambahkan data status",
-      };
-    }
-  });
-
-
-  // PATCH - Edit Status
-  app.patch("/master/statuses/:id", async ({error, body, params}) => {
-    try {
-      const parsed = StatusesSchema.safeParse(body);
-      if (!parsed.success) {
-        return error (400, parsed.error.errors);
-      }
-
-      const status = await Status.create(parsed.data);
-
-      return {
-        code: 200,
-        message: "Data status berhasil diperbarui",
-        data: status,
-      };
-    } catch (err) {
-      console.error("❌ Error saat menambahkan tiket:", err);
-      return error(500, { message: "Terjadi kesalahan pada server" });
-  }
-});
-
-  // SOFT DELETE - Hapus Status
-  app.delete("/master/statuses/:id", async ({error, params}) => {
-    try {
-      const id = params.id; // Get ID from URL parameter
-
-      // Validate ID
-      const status = await Status.findByPk(id);
+      const status = await Status.findByPk(params.id);
       if (!status) {
-        return error(400, "Id tidak dapat ditemukan!");
+        set.status = 400;
+        return { success: false, message: "Status tidak ditemukan" };
+      }
+      set.status = 200;
+      return { success: true, message: "Data status ditemukan", data: status };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Gagal mengambil data status" };
+    }
+  })
+
+  // PATCH - Update status
+  .patch("/:id", async ({ params, body, set }: { params: { id: string }, body: any, set: any }) => {
+    try {
+      const status = await Status.findByPk(params.id);
+      if (!status) {
+        set.status = 400;
+        return { success: false, message: "Status tidak ditemukan" };
       }
 
-      // Soft delete by setting deleted_at
-      status.deleted_at = new Date();
-      status.is_active = 0;
-      await status.save();
+      if (body.name && body.name.trim() === "") {
+        return { success: false, message: "Field name tidak boleh kosong" };
+      }
 
-      return {
-        code: 200,
-        message: "Data status berhasil dihapus (soft delete)",
-        data: status,
-      };
-    } catch (err) {
-      console.error("❌ Error saat menambahkan tiket:", err);
-      return error(500, { message: "Terjadi kesalahan pada server" });
-  }
-});
+      await status.update(body);
+      set.status = 200;
+      return { success: true, message: "Status berhasil diperbarui", data: status };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Gagal memperbarui status" };
+    }
+  })
 
-  export default app;
+  // DELETE - Hapus status
+  .delete("/:id", async ({ params, set }: { params: { id: string }, set: any }) => {
+    try {
+      const status = await Status.findByPk(params.id);
+      if (!status) {
+        set.status = 400;
+        return { success: false, message: "Status tidak ditemukan" };
+      }
+      await status.destroy();
+      set.status = 200;
+      return { success: true, message: "Status berhasil dihapus" };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Gagal menghapus status" };
+    }
+  });
+
+export default statusesApi;

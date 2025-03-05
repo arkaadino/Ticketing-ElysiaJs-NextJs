@@ -1,106 +1,173 @@
 import { Elysia } from "elysia";
-import { z } from "zod";
+import { cors } from "@elysiajs/cors";
 import { Ticketing } from "../models/ticketing";
-import sequelize from "../config/db";
+import { Priority } from "../models/priority";
+import { Category } from "../models/categories";
+import { Status } from "../models/statuses";
 
-const app = new Elysia();
+const ticketingApi = new Elysia({ prefix: "/master/ticketings" })
+  .use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+  }))
 
-const TicketingSchema = z.object({
-    id_karyawans: z.number().min(1, "ID Karyawan harus lebih besar dari 0"),
-    id_categories: z.number().min(1, "ID Kategori harus lebih besar dari 0"),
-    id_priorities: z.number().min(1, "ID Prioritas harus lebih besar dari 0"),
-    id_statuses: z.number().min(1, "ID Status harus lebih besar dari 0"),
-    keluhan: z.string().min(1, "Keluhan tidak boleh kosong"),
-    tanggal_keluhan: z.date().min(new Date("2025-02-15"), "Tanggal keluhan tidak valid"),
-    eskalasi: z.string().min(1, "Eskalasi tidak boleh kosong"),
-    response: z.string().min(1, "Response tidak boleh kosong"),
-    pending: z.string().min(1, "Pending tidak boleh kosong"),
-    analisa: z.string().min(1, "Analisa tidak boleh kosong"),
-    mulai_pengerjaan: z.date().nullable(),
-    selesai_pengerjaan: z.date().nullable(),
-    waktu_pengerjaan: z.date().nullable(),
-    is_active: z.number().min(1, "Status tidak boleh kosong"),
-});
-
-// GET - Ambil semua tiket
-app.get("/master/ticketings", async ({ error }) => {
+  // POST - Tambah tiket baru
+  .post("/", async ({ body, set }: { body: any; set: any }) => {
     try {
-        const tickets = await Ticketing.findAll();
-        if (tickets.length === 0) {
-            return error(400, { message: "Data tidak ditemukan" });
-        }
-        return {
-            code: 200,
-            message: "Data tiket ditemukan",
-            data: tickets
-        };
-    } catch (err) {
-        console.error("❌ Error saat mengambil data tiket:", err);
-        return error(500, { message: "Terjadi kesalahan pada server" });
-    }
-});
+      const errors: Record<string, string> = {};
 
-// POST - Tambah tiket baru
-app.post("/master/ticketings", async ({ error, body }) => {
+      if (!body.id_karyawans) errors.id_karyawans = "ID Karyawan harus diisi";
+      if (!body.id_categories) {
+        errors.id_categories = "ID Kategori harus dipilih";
+      } else {
+        const categoryExists = await Category.findOne({ where: { id: body.id_categories } });
+        if (!categoryExists) {
+          errors.id_categories = "Kategori tidak valid";
+        }
+      }
+      if (!body.id_priorities) {
+        errors.id_priorities = "Prioritas harus dipilih";
+      } else {
+        const priorityExists = await Priority.findOne({ where: { id: body.id_priorities } });
+        if (!priorityExists) {
+          errors.id_priorities = "Prioritas tidak valid";
+        }
+      }
+      if (!body.id_statuses) {
+        errors.id_statuses = "Status harus dipilih";
+      } else {
+        const statusExists = await Status.findOne({ where: { id: body.id_statuses } });
+        if (!statusExists) {
+          errors.id_statuses = "Status tidak valid";
+        }
+      }
+      if (!body.keluhan?.trim()) errors.keluhan = "Keluhan harus diisi";
+      if (!body.eskalasi?.trim()) errors.eskalasi = "Eskalasi harus diisi";
+      if (!body.response?.trim()) errors.response = "Response harus diisi";
+      if (!body.pending?.trim()) errors.pending = "Pending harus diisi";
+      if (!body.analisa?.trim()) errors.analisa = "Analisa harus diisi";
+      if (body.is_active === undefined) errors.is_active = "Status keaktifan harus diisi";
+
+      if (Object.keys(errors).length) {
+        set.status = 400;
+        return { success: false, message: "Gagal menambahkan tiket, periksa input!", errors };
+      }
+
+      const newTicket = await Ticketing.create(body);
+      set.status = 200;
+      return { success: true, message: "Tiket berhasil ditambahkan", data: newTicket };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Terjadi kesalahan server" };
+    }
+  })
+
+  // GET - Ambil semua tiket
+  .get("/", async ({ set }: { set: any }) => {
     try {
-        const parsed = TicketingSchema.safeParse(body);
-        if (!parsed.success) {
-            return error(400, { message: "Validasi gagal", errors: parsed.error.errors });
-        }
-        const ticket = await Ticketing.create(parsed.data);
-        return {
-            code: 200,
-            message: "Tiket berhasil ditambahkan",
-            data: ticket
-        };
-    } catch (err) {
-        console.error("❌ Error saat menambahkan tiket:", err);
-        return error(500, { message: "Terjadi kesalahan pada server" });
-    }
-});
+      const tickets = await Ticketing.findAll();
+      if (!tickets.length) {
+        set.status = 400;
+        return { success: false, message: "Data tidak ditemukan" };
+      }
 
-// PATCH - Edit tiket
-app.patch("/master/ticketings/:id", async ({ error, body, params }) => {
+      set.status = 200;
+      return { success: true, message: "Data tiket ditemukan", data: tickets };
+    } catch (error) {
+      set.status = 400;
+      return { success: false, message: "Gagal mengambil data tiket" };
+    }
+  })
+
+  // GET - Ambil tiket berdasarkan ID
+  .get("/:id", async ({ params, set }: { params: any; set: any }) => {
     try {
-        const ticket = await Ticketing.findByPk(params.id);
-        if (!ticket) {
-            return error(400, { message: "Tiket tidak ditemukan" });
-        }
-        const parsed = TicketingSchema.partial().safeParse(body);
-        if (!parsed.success) {
-            return error(400, { message: "Validasi gagal", errors: parsed.error.errors });
-        }
-        await ticket.update(parsed.data);
-        return {
-            code: 200,
-            message: "Tiket berhasil diperbarui",
-            data: ticket
-        };
-    } catch (err) {
-        console.error("❌ Error saat memperbarui tiket:", err);
-        return error(500, { message: "Terjadi kesalahan pada server" });
-    }
-});
+      const ticket = await Ticketing.findOne({ where: { id: params.id } });
+      if (!ticket) {
+        set.status = 400;
+        return { success: false, message: "Tiket tidak ditemukan" };
+      }
 
-// DELETE - Soft delete tiket
-app.delete("/master/ticketings/:id", async ({ error, params }) => {
+      set.status = 200;
+      return { success: true, message: "Data tiket ditemukan", data: ticket };
+    } catch (error) {
+      set.status = 400;
+      return { success: false, message: "Gagal mengambil data tiket" };
+    }
+  })
+
+  // PATCH - Update tiket
+  .patch("/:id", async ({ params, body, set }: { params: any; body: any; set: any }) => {
     try {
-        const ticket = await Ticketing.findByPk(params.id);
-        if (!ticket) {
-            return error(400, { message: "Tiket tidak ditemukan" });
-        }
-        ticket.deleted_at = new Date();
-        ticket.is_active = 0;
-        await ticket.save();
-        return {
-            code: 200,
-            message: "Tiket berhasil dihapus (soft delete)",
-            data: ticket
-        };
-    } catch (err) {
-        console.error("❌ Error saat menghapus tiket:", err);
-        return error(500, { message: "Terjadi kesalahan pada server" });
-    }
-});
+      const errors: Record<string, string> = {};
+      const ticket = await Ticketing.findOne({ where: { id: params.id } });
+      if (!ticket) {
+        set.status = 400;
+        return { success: false, message: "Tiket tidak ditemukan" };
+      }
 
-export default app;
+      if (!body.id_karyawans) errors.id_karyawans = "ID Karyawan harus diisi";
+      if (!body.id_categories) {
+        errors.id_categories = "ID Kategori harus dipilih";
+      } else {
+        const categoryExists = await Category.findOne({ where: { id: body.id_categories } });
+        if (!categoryExists) {
+          errors.id_categories = "Kategori tidak valid";
+        }
+      }
+      if (!body.id_priorities) {
+        errors.id_priorities = "Prioritas harus dipilih";
+      } else {
+        const priorityExists = await Priority.findOne({ where: { id: body.id_priorities } });
+        if (!priorityExists) {
+          errors.id_priorities = "Prioritas tidak valid";
+        }
+      }
+      if (!body.id_statuses) {
+        errors.id_statuses = "Status harus dipilih";
+      } else {
+        const statusExists = await Status.findOne({ where: { id: body.id_statuses } });
+        if (!statusExists) {
+          errors.id_statuses = "Status tidak valid";
+        }
+      }
+      if (!body.keluhan?.trim()) errors.keluhan = "Keluhan harus diisi";
+      if (!body.eskalasi?.trim()) errors.eskalasi = "Eskalasi harus diisi";
+      if (!body.response?.trim()) errors.response = "Response harus diisi";
+      if (!body.pending?.trim()) errors.pending = "Pending harus diisi";
+      if (!body.analisa?.trim()) errors.analisa = "Analisa harus diisi";
+      if (body.is_active === undefined) errors.is_active = "Status keaktifan harus diisi";
+
+      if (Object.keys(errors).length) {
+        set.status = 400;
+        return { success: false, message: "Gagal memperbarui tiket, periksa input!", errors };
+      }
+
+      await ticket.update(body);
+      set.status = 200;
+      return { success: true, message: "Tiket berhasil diperbarui", data: ticket };
+    } catch (error) {
+      set.status = 400;
+      return { success: false, message: "Gagal memperbarui tiket" };
+    }
+  })
+
+  // DELETE - Soft delete tiket
+  .delete("/:id", async ({ params, set }: { params: any; set: any }) => {
+    try {
+      const ticket = await Ticketing.findOne({ where: { id: params.id } });
+      if (!ticket) {
+        set.status = 400;
+        return { success: false, message: "Tiket tidak ditemukan" };
+      }
+
+      await ticket.update({ is_active: 0, deleted_at: new Date() });
+      set.status = 200;
+      return { success: true, message: "Tiket berhasil dihapus (soft delete)" };
+    } catch (error) {
+      set.status = 400;
+      return { success: false, message: "Gagal menghapus tiket" };
+    }
+  });
+
+export default ticketingApi;

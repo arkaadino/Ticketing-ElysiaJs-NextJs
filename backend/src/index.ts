@@ -1,37 +1,32 @@
 import { Elysia } from "elysia";
 import sequelize from "./config/db";
-import statusesApi from "./api/statusesApi"; // Match the existing file name
-import categoriesApi from "./api/categoriesApi"; // Match the existing file name
-import karyawanApi from "./api/karyawanApi";
-import priorityApi from "./api/priorityApi";
-import ticketingApi from "./api/ticketingApi";
-import { connectAndSyncDB } from "./config/db";
-
 import server from "./config/server";
+import { connectAndSyncDB } from "./config/db";
 import cors from "@elysiajs/cors";
 
-const app = new Elysia();
 
-app.get("/", () => "BACKEND API");
-
-app.use(cors({
-    origin: "http://localhost:3000", // Allow Next.js frontend
-    methods: ["GET", "POST", "PATCH", "DELETE"], // Allowed HTTP methods
-    credentials: true, // Allow cookies if needed
-    allowedHeaders: ["Content-Type", "Authorization"], // ✅ Tambahkan Content-Type agar tidak diblokir
-}));// Use the API routes
-
-app.use(server);
-app.use(statusesApi);
-app.use(categoriesApi);
-app.use(karyawanApi);
-app.use(priorityApi);
-app.use(ticketingApi);
-
-connectAndSyncDB().then(() => {
+const app = new Elysia()
+  .use(cors({
+      origin: "http://localhost:3000",
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+      credentials: true
+  }))
+    .options("/*", ({ set }) => {
+        set.headers["Access-Control-Allow-Origin"] = "http://localhost:3000";
+        set.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
+        set.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
+        set.headers["Access-Control-Allow-Credentials"] = "true";
+        return new Response(null, { status: 204 });
+    })
+  .get("/", () => "BACKEND API")
+  .use(server);
+    
+    connectAndSyncDB().then(() => {
     console.log("✅ Memulai server...");
 }).catch(err => {
     console.error("❌ Gagal menghubungkan database:", err);
 });
+
 
 export default app;

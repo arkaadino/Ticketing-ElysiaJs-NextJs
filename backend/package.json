@@ -1,6 +1,7 @@
 {
   "name": "ticketing-app",
   "version": "1.0.50",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "PORT=5000 bun run --watch src/index.ts",

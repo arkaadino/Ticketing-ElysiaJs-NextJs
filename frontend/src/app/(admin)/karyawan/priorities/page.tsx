@@ -1,7 +1,6 @@
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import BasicTableOne from "@/components/tables/TicketingTable";
-
+import PriorityTable from "@/components/tables/PriorityTable";
 import React from "react";
 
 export default function BasicTables() {
@@ -10,7 +9,7 @@ export default function BasicTables() {
       <PageBreadcrumb pageTitle="Prioritas" />
       <div className="space-y-6">
         <ComponentCard title="Data Prioritas">
-          <BasicTableOne />
+          <PriorityTable />
         </ComponentCard>
       </div>
     </div>

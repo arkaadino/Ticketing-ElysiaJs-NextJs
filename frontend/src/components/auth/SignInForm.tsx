@@ -1,58 +1,22 @@
 "use client";
-import Checkbox from "@/components/form/input/Checkbox";
+import React, { useState } from "react";
+import useAuth from "@/hooks/useAuth";
+
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
-import Link from "next/link";
-import React, { useState } from "react";
-import Swal from "sweetalert2";
+import { EyeCloseIcon, EyeIcon } from "@/icons";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [nik, setNik] = useState("");
   const [password, setPassword] = useState("");
+  
+  const { login, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
-    const data = { nik, password };
-  
-    try {
-      const response = await fetch("http://localhost:5000/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // 🛠 Penting agar cookie dikirim otomatis!
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-  
-      if (!response.ok) {
-        Swal.fire({
-          title: "Error!",
-          text: result.message,
-          icon: "error",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#ac2f1d",
-        });
-        return;
-      }
-
-      Swal.fire({
-        title: "Success!",
-        text: "Selamat Datang!",
-        icon: "success",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#2c9830",
-      }).then(() => {
-        window.location.href = "/";
-      });
-    } catch (error) {
-      console.error("Network error:", error);
-    }
+    await login(nik, password);
   };
 
   return (
@@ -107,8 +71,13 @@ export default function SignInForm() {
                   </div>
                 </div>
                 <div>
-                  <Button className="w-full bg-brand-900" variant="outline" size="sm">
-                    Sign in
+                  <Button 
+                    className="w-full bg-brand-900" 
+                    variant="outline" 
+                    size="sm"
+                    disabled={loading}
+                  >
+                    {loading ? "Signing in..." : "Sign in"}
                   </Button>
                 </div>
               </div>

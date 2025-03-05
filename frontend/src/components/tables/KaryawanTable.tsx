@@ -11,53 +11,16 @@ import {
 
 import Badge from "../ui/badge/Badge";
 import Button from "@/components/ui/button/Button";
-
-interface Karyawan {
-  id: number;
-  id_priorities: number;
-  nik: number;
-  name: string;
-  position: string;
-  unit_kerja: string;
-  job_title: string;
-  role: "admin" | "employee";
-  is_active: number;
-}
+import useKaryawan from "@/hooks/useKaryawan";
 
 export default function KaryawanTable() {
-  const [karyawan, setKaryawan] = useState<Karyawan[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { karyawanList, loading, deleteKaryawan, fetchKaryawan } = useKaryawan();
 
   useEffect(() => {
-    async function fetchKaryawan() {
-      try {
-        const response = await fetch("http://localhost:5000/master/karyawan", {
-          method: "GET",
-          credentials: "include", // 🛠 Penting agar cookie dikirim otomatis!
-        });
-  
-        const result = await response.json();
-        if (!response.ok || !result.data) {
-          throw new Error(result.message || "Gagal mengambil data karyawan");
-        }
-          
-  
-        setKaryawan(result.data ?? []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Terjadi kesalahan");
-      } finally {
-        setLoading(false);
-      }
-    }
-  
-    fetchKaryawan();
-  }, []);
-  
-  if (loading) return <p>Loading data karyawan...</p>;
-  if (error) return <p>Error: {error}</p>;
+    fetchKaryawan(); // Fetch Karyawan data on component mount
+  }, [karyawanList]);
 
-  return (
+  return ( 
     <div className="overflow-hidden">
       <div className="max-w-full overflow-x-auto">
         <div className="min-w-[1102px]">
@@ -72,20 +35,29 @@ export default function KaryawanTable() {
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Jabatan</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Role</TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">Status</TableCell>
+                <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 flex space-x-2">Aksi</TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {karyawan.map((item: Karyawan, index: number) => (
-                <TableRow key={item.id}>
+              {karyawanList.map((karyawan, index)=> (
+                <TableRow key={karyawan.id}>
                   <TableCell className="px-5 py-4 sm:px-6 text-start">{index + 1}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.name}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.nik}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.position}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.unit_kerja}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.job_title}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{item.role}</TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{karyawan.name}</TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{karyawan.nik}</TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{karyawan.position}</TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{karyawan.unit_kerja}</TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{karyawan.job_title}</TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{karyawan.role}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    <Badge size="sm" color={item.is_active ? "success" : "error"}>{item.is_active ? "Active" : "Inactive"}</Badge>
+                    <Badge size="sm" color={karyawan.is_active ? "success" : "error"}>{karyawan.is_active ? "Active" : "Inactive"}</Badge>
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400 flex space-x-2">
+                    <Button className="px-3 py-1 bg-warning-400 text-white rounded hover:bg-warning-500 transition">
+                      Edit
+                    </Button>
+                    <Button className="px-3 py-1 bg-error-500 text-white rounded hover:bg-error-600 transition" onClick={() => deleteKaryawan(karyawan.id)}>
+                      Delete
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

@@ -3,6 +3,12 @@ import { jwt } from "@elysiajs/jwt";
 import { cookie } from "@elysiajs/cookie";
 import { cors } from "@elysiajs/cors";
 import authApi from "../api/authApi";
+import ticketingApi from "../api/ticketingApi";
+import statusesApi from "../api/statusesApi";
+import karyawanApi from "../api/karyawanApi";
+import categoriesApi from "../api/categoriesApi";
+import priorityApi from "../api/priorityApi";
+
 
 
 const server = new Elysia()
@@ -21,6 +27,12 @@ const server = new Elysia()
       exp: "1d"
     })
   )
-  .use(authApi);
+.use(authApi)
+.use(ticketingApi)
+.use(statusesApi)
+.use(karyawanApi)
+.use(categoriesApi)
+.use(priorityApi);
+
 
 export default server;

@@ -1,131 +1,105 @@
-import { Priority } from "../models/priority";
-import sequelize from "../config/db";
 import { Elysia } from "elysia";
-import { z } from "zod";
+import { cors } from "@elysiajs/cors";
+import { Priority } from "../models/priority";
 
-const app = new Elysia();
+const priorityApi = new Elysia({ prefix: "/priority" })
+  .use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+  }))
 
-// GET - Ambil semua priority
-app.get("/master/priority", async ({error}) => {
-  try {
-    console.log("📥 Menjalankan query untuk mengambil semua priority...");
+  // POST - Tambah priority baru
+  .post("/", async ({ body, set }: { body: any; set: any }) => {
+    try {
+      const errors: Record<string, string> = {};
 
-    if (!sequelize.isDefined("Priority")) {
-      throw new Error("Model Priority belum terinisialisasi!");
+      if (!body.name || body.name.trim() === "") {
+        errors.name = "Field name harus diisi dan tidak boleh kosong";
+      }
+
+      if (Object.keys(errors).length) {
+        set.status = 400;
+        return { success: false, message: "Gagal menambahkan priority, periksa input!", errors };
+      }
+
+      const newPriority = await Priority.create(body);
+      set.status = 200;
+      return { success: true, message: "Priority berhasil ditambahkan", data: newPriority };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Terjadi kesalahan server" };
     }
+  })
 
-    const priorities = await Priority.findAll();
-
-    console.log("✅ Query berhasil, hasil:", priorities);
-
-    if (priorities.length === 0) {
-      return {
-        code: 404,
-        message: "Data priority tidak dapat ditemukan",
-      };
+  // GET - Ambil semua priorities
+  .get("/", async ({ set }: { set: any }) => {
+    try {
+      const priorityList = await Priority.findAll();
+      if (priorityList.length === 0) {
+        set.status = 400;
+        return { success: false, message: "Data tidak ditemukan" };
+      }
+      set.status = 200;
+      return { success: true, message: "Data priorities ditemukan", data: priorityList };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Gagal mengambil data priorities" };
     }
-    return {
-      code: 200,
-      message: "Data priority ditemukan",
-      data: priorities,
-    };
-  } catch (err) {
-    console.error("❌ Error saat menambahkan tiket:", err);
-    return error(500, { message: "Terjadi kesalahan pada server" });
-}
-});
+  })
 
-// Validasi input untuk menambahkan priority baru
-const PrioritySchema = z.object({
-  sla: z.number().min(1, "SLA tidak boleh kosong"),
-  level: z.number().min(1, "Level tidak boleh kosong"),
-  is_active: z.number().min(1, "Status tidak boleh kosong"),
-});
-
-// POST - Tambah priority baru
-app.post("/master/priority", async ({ error, body }) => {
-  try {
-    const parsed = PrioritySchema.safeParse(body);
-    if (!parsed.success) {
-      return error(400, parsed.error.errors);
+  // GET - Ambil priority berdasarkan ID
+  .get("/:id", async ({ params, set }: { params: { id: string }, set: any }) => {
+    try {
+      const priority = await Priority.findByPk(params.id);
+      if (!priority) {
+        set.status = 400;
+        return { success: false, message: "Priority tidak ditemukan" };
+      }
+      set.status = 200;
+      return { success: true, message: "Data priority ditemukan", data: priority };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Gagal mengambil data priority" };
     }
+  })
 
-    const priority = await Priority.create(parsed.data);
+  // PATCH - Update priority
+  .patch("/:id", async ({ params, body, set }: { params: { id: string }, body: any, set: any }) => {
+    try {
+      const priority = await Priority.findByPk(params.id);
+      if (!priority) {
+        set.status = 400;
+        return { success: false, message: "Priority tidak ditemukan" };
+      }
 
-    return {
-      code: 200,
-      message: "Data priority berhasil ditambahkan",
-      data: priority,
-    };
-  } catch (error) {
-    console.error("❌ Error saat menambahkan data priority:", error);
-    return {
-      code: 500,
-      message: "Gagal menambahkan data priority",
-    };
-  }
-});
+      if (body.name && body.name.trim() === "") {
+        return { success: false, message: "Field name tidak boleh kosong" };
+      }
 
-// Validasi input untuk update data priority
-const PriorityUpdateSchema = z.object({
-  sla: z.number().min(1, "SLA tidak boleh kosong"),
-  level: z.number().min(1, "Level tidak boleh kosong"),
-  is_active: z.number().min(1, "Status tidak boleh kosong"),
-});
-
-// PATCH - Edit data priority
-app.patch("/master/priority/:id", async ({ error, body, params }) => {
-  try {
-    const parsed = PriorityUpdateSchema.safeParse(body);
-    if (!parsed.success) {
-      return error(400, parsed.error.errors);
+      await priority.update(body);
+      set.status = 200;
+      return { success: true, message: "Priority berhasil diperbarui", data: priority };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Gagal memperbarui priority" };
     }
+  })
 
-    const priority = await Priority.findByPk(params.id);
-    if (!priority) {
-      return error(404, "Priority tidak ditemukan");
+  // DELETE - Hapus priority
+  .delete("/:id", async ({ params, set }: { params: { id: string }, set: any }) => {
+    try {
+      const priority = await Priority.findByPk(params.id);
+      if (!priority) {
+        set.status = 400;
+        return { success: false, message: "Priority tidak ditemukan" };
+      }
+      await priority.destroy();
+      set.status = 200;
+      return { success: true, message: "Priority berhasil dihapus" };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Gagal menghapus priority" };
     }
+  });
 
-    await priority.update(parsed.data);
-
-    return {
-      code: 200,
-      message: "Data priority berhasil diperbarui",
-      data: priority,
-    };
-  } catch (error) {
-    console.error("❌ Error saat mengedit data priority:", error);
-    return {
-      code: 500,
-      message: "Gagal mengedit data priority",
-    };
-  }
-});
-
-// SOFT DELETE - Hapus data priority
-app.delete("/master/priority/:id", async ({ error, params }) => {
-  try {
-    const priority = await Priority.findByPk(params.id);
-    if (!priority) {
-      return error(404, "Priority tidak ditemukan");
-    }
-
-    priority.deleted_at = new Date();
-    priority.is_active = 0;
-    await priority.save();
-
-    return {
-      code: 200,
-      message: "Data priority berhasil dihapus (soft delete)",
-      data: priority,
-    };
-  } catch (error) {
-    console.error("❌ Error saat menghapus data priority:", error);
-    return {
-      code: 500,
-      message: "Gagal menghapus data priority",
-    };
-  }
-});
-
-export default app;
+export default priorityApi;

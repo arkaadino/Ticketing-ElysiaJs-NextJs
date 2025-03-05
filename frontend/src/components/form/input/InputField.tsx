@@ -1,15 +1,15 @@
 import React, { FC } from "react";
 
 interface InputProps {
-  type?: "text" | "number" | "email" | "password" | "date" | "time" | string;
+  type?: "text" | "number" | "email" | "password" | "date" | "time" | string | number;
   id?: string;
-  name?: string;
+  name?: string | number;
   placeholder?: string;
   defaultValue?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
-  min?: string;
-  max?: string;
+  min?: string | number;
+  max?: string | number;
   step?: number;
   disabled?: boolean;
   success?: boolean;

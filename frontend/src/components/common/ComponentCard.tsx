@@ -43,15 +43,16 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
   const getFormComponent = () => {
     switch (title.toLowerCase()) {
       case "ticketings":
-        return <TicketingForm />;
+        return <TicketingForm closeModal={closeModal}/>;
       case "karyawan":
-      case "karyawan/eskalasi":
       case "karyawan/priorities":
-        return <KaryawanForm />;
+        return <KaryawanForm closeModal={closeModal}/>;
       case "statuses":
-        return <StatusesForm />;
+        return <StatusesForm closeModal={closeModal}/>;
       case "categories":
-        return <CategoriesForm />;
+        return <CategoriesForm closeModal={closeModal}/>;
+      case "categories":
+        return <CategoriesForm closeModal={closeModal}/>;  
       default:
         return null;
     }

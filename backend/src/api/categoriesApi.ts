@@ -1,144 +1,105 @@
-import { Category, CategoriesEntity } from "../models/categories";
-import sequelize from "../config/db";
-import { Elysia, } from "elysia";
-import { z } from "zod";
+import { Elysia } from "elysia";
+import { cors } from "@elysiajs/cors";
+import { Category } from "../models/categories";
 
-const app = new Elysia();
+const categoriesApi = new Elysia({ prefix: "/categories" })
+  .use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+  }))
 
+  // POST - Tambah kategori baru
+  .post("/", async ({ body, set }: { body: any; set: any }) => {
+    try {
+      const errors: Record<string, string> = {};
 
-app.get("/master/categories", async ({error}) => {
-  try {
-    console.log("📥 Menjalankan query untuk mengambil kategori...");
+      if (!body.name || body.name.trim() === "") {
+        errors.name = "Field name harus diisi dan tidak boleh kosong";
+      }
 
-    const category = await Category.findAll({
-      where: {
-        is_active: 1,
-      },
-    });
+      if (Object.keys(errors).length) {
+        set.status = 400;
+        return { success: false, message: "Gagal menambahkan kategori, periksa input!", errors };
+      }
 
-    console.log("✅ Query berhasil, hasil:", category);
-
-    if (category.length === 0){
-      return {
-        code: 400,
-        message: "Data categories tidak dapat ditemukan",
-      };  
+      const newCategory = await Category.create(body);
+      set.status = 200;
+      return { success: true, message: "Kategori berhasil ditambahkan", data: newCategory };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Terjadi kesalahan server" };
     }
-    return {
-      code: 200,
-      message: "Data categories ditemukan",
-      data: category,
-    };
-  } catch (err) {
-    console.error("❌ Error saat menambahkan tiket:", err);
-    return error(500, { message: "Terjadi kesalahan pada server" });
-}
-});
+  })
 
-
-// Definisikan tipe untuk body request
-
-const CategorySchema = z.object({
-  name: z.string()
-    .trim() // Hapus spasi di awal & akhir
-    .min(1, "Nama kategori tidak boleh kosong atau hanya berisi spasi"),
-  is_active: z.number(),
-});
-
-app.post("/master/categories", async ({ error, body }) => {
-  try {
-    // Validasi request body
-    const parsed = CategorySchema.safeParse(body);
-    if (!parsed.success) {
-      return error(400, parsed.error.errors);
+  // GET - Ambil semua categories
+  .get("/", async ({ set }: { set: any }) => {
+    try {
+      const categoryList = await Category.findAll();
+      if (categoryList.length === 0) {
+        set.status = 400;
+        return { success: false, message: "Data tidak ditemukan" };
+      }
+      set.status = 200;
+      return { success: true, message: "Data kategori ditemukan", data: categoryList };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Gagal mengambil data kategori" };
     }
+  })
 
-    const category = await Category.create(parsed.data);
-    
-    return {
-      code: 200,
-      message: "Kategori berhasil ditambahkan",
-      data: category,
-    };
-  } catch (error) {
-    console.error("❌ Error saat menambahkan kategori:", error);
-    return {
-      code: 500,
-      message: "Gagal menambahkan kategori",
-    };
-  }
-});
-
-
-// PATCH - Edit Category
-const CategoryUpdateSchema = z.object({
-  name: z.string()
-    .trim()
-    .min(1, "Nama kategori tidak boleh kosong atau hanya berisi spasi")
-    .optional(),
-  is_active: z.number().optional(),
-});
-
-app.patch("/master/categories/:id", async ({ error, params, body }) => {
-  try {
-    const id = parseInt(params.id, 10);
-    if (isNaN(id)) return error(400, "ID kategori tidak valid");
-
-    const category = await Category.findByPk(id);
-    if (!category) return error(404, "Kategori tidak ditemukan");
-
-    // Validasi data yang akan di-update
-    const parsed = CategoryUpdateSchema.safeParse(body);
-    if (!parsed.success) {
-      return error(400, parsed.error.errors);
+  // GET - Ambil category berdasarkan ID
+  .get("/:id", async ({ params, set }: { params: { id: string }, set: any }) => {
+    try {
+      const category = await Category.findByPk(params.id);
+      if (!category) {
+        set.status = 400;
+        return { success: false, message: "Kategori tidak ditemukan" };
+      }
+      set.status = 200;
+      return { success: true, message: "Data kategori ditemukan", data: category };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Gagal mengambil data kategori" };
     }
+  })
 
-    await category.update(parsed.data);
+  // PATCH - Update category
+  .patch("/:id", async ({ params, body, set }: { params: { id: string }, body: any, set: any }) => {
+    try {
+      const category = await Category.findByPk(params.id);
+      if (!category) {
+        set.status = 400;
+        return { success: false, message: "Kategori tidak ditemukan" };
+      }
 
-    return {
-      code: 200,
-      message: "Kategori berhasil diperbarui",
-      data: category,
-    };
-  } catch (error) {
-    console.error("❌ Error saat mengupdate kategori:", error);
-    return {
-      code: 500,
-      message: "Gagal mengupdate kategori",
-    };
-  }
-});
+      if (body.name && body.name.trim() === "") {
+        return { success: false, message: "Field name tidak boleh kosong" };
+      }
 
-// SOFT DELETE - Hapus Status
-
-// SOFT DELETE - Hapus Category
-app.delete("/master/categories/:id", async ({error, params}) => {
-  try {
-    const id = params.id; // Ambil ID dari parameter URL
-
-    // Validasi ID
-    const category = await Category.findByPk(id);
-    if (!category) {
-      return error(400, "Id tidak dapat ditemukan!");
+      await category.update(body);
+      set.status = 200;
+      return { success: true, message: "Kategori berhasil diperbarui", data: category };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Gagal memperbarui kategori" };
     }
+  })
 
-    // Soft delete dengan mengisi deleted_at
-    category.deleted_at = new Date();
-    category.is_active = 0;
-    await category.save();
+  // DELETE - Hapus category
+  .delete("/:id", async ({ params, set }: { params: { id: string }, set: any }) => {
+    try {
+      const category = await Category.findByPk(params.id);
+      if (!category) {
+        set.status = 400;
+        return { success: false, message: "Kategori tidak ditemukan" };
+      }
+      await category.destroy();
+      set.status = 200;
+      return { success: true, message: "Kategori berhasil dihapus" };
+    } catch (error) {
+      set.status = 500;
+      return { success: false, message: "Gagal menghapus kategori" };
+    }
+  });
 
-    return {
-      code: 200,
-      message: "Data category berhasil dihapus (soft delete)",
-      data: category,
-    };
-  } catch (error) {
-    console.error("❌ Error saat menghapus data category:", error);
-    return {
-      code: 500,
-      message: "Gagal menghapus data category",
-    };
-  }
-});
-
-export default app;
+export default categoriesApi;

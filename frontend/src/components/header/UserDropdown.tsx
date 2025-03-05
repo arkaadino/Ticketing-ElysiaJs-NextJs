@@ -5,13 +5,11 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dropdown } from "../ui/dropdown/Dropdown";
-import Swal from "sweetalert2";
-import { useAuth } from "@/hooks/useAuth";
-import "@/styles/swal.css";
+import useAuth from "@/hooks/useAuth";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, loading } = useAuth(); // Ambil data user dari useAuth
+  const { user, loading, logout } = useAuth(); // Ambil data user dari useAuth
   const router = useRouter();
 
   function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
@@ -21,41 +19,6 @@ export default function UserDropdown() {
 
   function closeDropdown() {
     setIsOpen(false);
-  }
-
-  function handleLogout() {
-    Swal.fire({
-      title: "Konfirmasi Logout",
-      text: "Apakah Anda yakin ingin logout?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Ya, Logout!",
-      cancelButtonText: "Batal",
-
-
-    }).then((result) => {
-      if (result.isConfirmed) {
-        fetch("http://localhost:5000/auth/logout", {
-          method: "POST",
-          credentials: "include",
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.success) {
-              Swal.fire("Berhasil!", "Anda telah logout.", "success").then(() => {
-                router.replace("/signin");
-              });
-            } else {
-              Swal.fire("Gagal!", data.message || "Logout gagal!", "error");
-            }
-          })
-          .catch(() => {
-            Swal.fire("Error!", "Terjadi kesalahan saat logout.", "error");
-          });
-      }
-    });
   }
 
   return (
@@ -89,7 +52,7 @@ export default function UserDropdown() {
         </div>
 
         <button
-          onClick={handleLogout}
+          onClick={logout}
           className="w-full flex items-center gap-3 px-3 py-2 font-medium text-red-600 rounded-lg group text-theme-sm hover:bg-red-100 dark:hover:bg-red-900"
         >
           Logout

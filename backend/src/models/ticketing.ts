@@ -19,6 +19,7 @@ export type TicketingEntity = {
     mulai_pengerjaan: Date | null;
     selesai_pengerjaan: Date | null;
     waktu_pengerjaan: Date | null;
+    is_active: number;
     created_at?: Date;
     updated_at?: Date;
     deleted_at?: Date | null;
@@ -127,7 +128,7 @@ export class Ticketing extends Model<TicketingEntity> {
     @Column({
         type: DataType.TINYINT,
         defaultValue: 0,
-        allowNull: false, // Tidak boleh kosong
+        allowNull: false,
     })
     is_active!: number;
 
