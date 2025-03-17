@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+
 import { cors } from "@elysiajs/cors";
 import { Karyawan } from "../models/karyawan";
 import { Priority } from "../models/priority";
@@ -40,6 +41,7 @@ const karyawanApi = new Elysia({ prefix: "/karyawan" })
       }
 
       const newKaryawan = await Karyawan.create(body);
+
       set.status = 200;
       return { success: true, message: "Karyawan berhasil ditambahkan", data: newKaryawan };
     } catch (error) {
@@ -51,7 +53,14 @@ const karyawanApi = new Elysia({ prefix: "/karyawan" })
     // GET - Ambil semua karyawan (hanya yang aktif)
   .get("/", async ({ set }: { set: any }) => {
     try {
-      const karyawanList = await Karyawan.findAll({ where: { is_active: 1 } });
+      const karyawanList = await Karyawan.findAll({ 
+        where: { is_active: 1 }, 
+        include: [{
+          model: Priority,
+          attributes: ["id", "sla", "level"]
+        },
+      ],
+      });
       if (!karyawanList.length) {
         set.status = 400;
         return { success: false, message: "Data tidak ditemukan" };
@@ -85,40 +94,30 @@ const karyawanApi = new Elysia({ prefix: "/karyawan" })
   // PATCH - Update karyawan
   .patch("/:id", async ({ params, body, set }: { params: any; body: any; set: any }) => {
     try {
-      const errors: Record<string, string> = {};
-      const karyawan = await Karyawan.findOne({ where: { id: params.id, is_active: 1 } });
+      const karyawan = await Karyawan.findOne({
+        where: { id: params.id, is_active: 1 },
+        attributes: { include: ["password"] }, // ✅ Ensure password is included
+      });
+  
       if (!karyawan) {
         set.status = 400;
         return { success: false, message: "Karyawan tidak ditemukan" };
       }
-
-      if (!body.nik) errors.nik = "NIK harus diisi";
-      if (!body.name?.trim()) errors.name = "Nama harus diisi";
-      if (!body.position?.trim()) errors.position = "Jabatan harus diisi";
-      if (!body.unit_kerja?.trim()) errors.unit_kerja = "Unit kerja harus diisi";
-      if (!body.job_title?.trim()) errors.job_title = "Job title harus diisi";
-      if (!body.role || !["admin", "employee"].includes(body.role)) errors.role = "Role harus berupa 'admin' atau 'employee'";
-      if (!body.is_active || !["1", "0"].includes(body.is_active)) errors.is_active = "Status keaktifan harus diisi";
-      if (!body.is_active || !["1", "0"].includes(body.is_active)) errors.is_active = "Status keaktifan harus diisi";
-      if (!body.id_priorities) {
-        errors.id_priorities = "Prioritas harus dipilih";
-      } else {
-        const priorityExists = await Priority.findOne({ where: { id: body.id_priorities } });
-        if (!priorityExists) {
-          errors.id_priorities = "Prioritas tidak valid";
-        }
-      }      if (body.role === "admin" && !body.password) errors.password = "Password harus diisi untuk admin";
-
-      if (Object.keys(errors).length) {
-        set.status = 400;
-        return { 
-          success: false, 
-          message: "Gagal menambahkan karyawan, periksa input!", 
-          errors 
-        };
-      }
-
-      await karyawan.update(body);
+  
+      const updatedData = {
+        nik: body.nik ?? karyawan.nik,
+        name: body.name ?? karyawan.name,
+        position: body.position ?? karyawan.position,
+        unit_kerja: body.unit_kerja ?? karyawan.unit_kerja,
+        job_title: body.job_title ?? karyawan.job_title,
+        role: body.role ?? karyawan.role,
+        is_active: body.is_active ?? karyawan.is_active,
+        id_priorities: body.id_priorities ?? karyawan.id_priorities,
+        password: body.password ?? karyawan.password,
+      };
+  
+      await karyawan.update(updatedData);
+  
       set.status = 200;
       return { success: true, message: "Karyawan berhasil diperbarui", data: karyawan };
     } catch (error) {
@@ -126,8 +125,7 @@ const karyawanApi = new Elysia({ prefix: "/karyawan" })
       return { success: false, message: "Gagal memperbarui karyawan" };
     }
   })
-
-  // DELETE - Soft delete karyawan (update is_active ke 0 dan deleted_at diisi)
+    // DELETE - Soft delete karyawan (update is_active ke 0 dan deleted_at diisi)
   .delete("/:id", async ({ params, set }: { params: any; set: any }) => {
     try {
       const karyawan = await Karyawan.findOne({ where: { id: params.id, is_active: 1 } });

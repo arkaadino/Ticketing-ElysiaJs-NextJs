@@ -5,10 +5,11 @@ import { useModal } from "@/hooks/useModal";
 import { Modal } from "../ui/modal";
 
 // Import modal form yang sesuai
-import TicketingForm from "../forms/TicketingForm";
-import KaryawanForm from "../forms/KaryawanForm";
-import StatusesForm from "../forms/StatusesForm";
-import CategoriesForm from "../forms/CategoriesForm";
+import TicketingForm from "../forms/Ticketing/TicketingForm";
+import KaryawanForm from "../forms/Karyawan/KaryawanForm";
+import StatusesForm from "../forms/Statuses/StatusesForm";
+import CategoriesForm from "../forms/Categories/CategoriesForm";
+import PriorityForm from "../forms/Priority/PriorityForm";
 
 interface ComponentCardProps {
   title: string;
@@ -30,8 +31,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
   const allowedPages = [
     "ticketing",
     "karyawan",
-    "karyawan/eskalasi",
-    "karyawan/priorities",
+    "priorities",
     "statuses",
     "categories",
   ];
@@ -45,8 +45,9 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
       case "ticketings":
         return <TicketingForm closeModal={closeModal}/>;
       case "karyawan":
-      case "karyawan/priorities":
         return <KaryawanForm closeModal={closeModal}/>;
+      case "priorities":
+        return <PriorityForm closeModal={closeModal}/>;
       case "statuses":
         return <StatusesForm closeModal={closeModal}/>;
       case "categories":

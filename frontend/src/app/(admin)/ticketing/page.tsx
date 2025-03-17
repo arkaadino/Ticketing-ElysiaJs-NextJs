@@ -9,7 +9,7 @@ export default function BasicTables() {
     <div>
       <PageBreadcrumb pageTitle="Ticketing" />
       <div className="space-y-6">
-        <ComponentCard title="Data Ticketing">
+        <ComponentCard title="Ticketing">
           <TicketingTable />
         </ComponentCard>
       </div>

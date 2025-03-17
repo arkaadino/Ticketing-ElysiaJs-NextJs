@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { showAlert, showConfirm } from "@/components/ui/swal/swal";
-
+import { fetchWithRefresh } from "@/utils/api";
 export default function usePriority() {
-  const [PriorityList, setPriorityList] = useState<any[]>([]);
+  const [priorityList, setPriorityList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [priority, setPriority] = useState<any | null>(null);
+
 
   useEffect(() => {
     fetchPriority(); // 🔥 Ambil data priority saat pertama kali load
@@ -12,7 +14,7 @@ export default function usePriority() {
   // 🔥 Fetch semua karyawan yang aktif
   const fetchPriority = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/priority`, {
+      const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/priority`, {
         method: "GET",
         credentials: "include",
       });
@@ -31,44 +33,74 @@ export default function usePriority() {
     }
   };
 
-    
-  // 🔥 Tambah karyawan baru
-  const addPriority = async (data: any) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/priority`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-      setLoading(false);
-
-      if (!response.ok) {
-        showAlert("Gagal!", result.message, "error");
-        return false;
+    const selectPriority = useCallback(async (id: string): Promise<any | null> => {
+      setLoading(true);
+      try {
+        const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/priority/${id}`, {
+          method: "GET",
+          credentials: "include",
+        });
+  
+        const result = await response.json();
+        if (result.success) {
+          setPriority(result.data || null);
+          return result.data; // Return the data
+        } else {
+          showAlert("Error!", result.message, "error");
+          return null;
+        }
+      } catch (error) {
+        console.error("Failed to fetch priority:", error);
+        showAlert("Error!", "Failed to fetch priority!", "error");
+        return null;
+      } finally {
+        setLoading(false);
       }
+    }, []);
+  
+    
+// 🔥 Tambah priority baru
+const addPriority = async (data: any) => {
+  setLoading(true);
+  try {
+    const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/priority`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
 
-      showAlert("Berhasil!", "priority berhasil ditambahkan.", "success").then(() => {
-        fetchPriority(); // Refresh data
-      });
+    const result = await response.json();
+    setLoading(false);
 
-      return true;
-    } catch (error) {
-      console.error("Gagal menambahkan priority:", error);
-      setLoading(false);
-      showAlert("Error!", "Terjadi kesalahan, coba lagi!", "error");
-      return false;
+    if (!response.ok) {
+      // Jika ada error validasi dari server, kembalikan ke form untuk ditampilkan
+      if (result.errors) {
+        return { success: false, errors: result.errors };
+      }
+      
+      // Jika error lain (bukan validasi), tampilkan Swal
+      showAlert("Gagal!", result.message, "error");
+      return { success: false, errors: {}};
     }
-  };
 
+    showAlert("Berhasil!", "Priority berhasil ditambahkan.", "success").then(() => {
+      fetchPriority(); // Refresh data
+    });
+
+    return { success: true, errors: {}};
+  } catch (error) {
+    console.error("Gagal menambahkan priority:", error);
+    setLoading(false);
+    showAlert("Error!", "Terjadi kesalahan, coba lagi!", "error");
+    return { success: false };
+  }
+};
   // 🔥 Update priority
   const updatePriority = async (id: string, data: any) => {
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/priority/${id}`, {
+      const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/priority/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -79,15 +111,21 @@ export default function usePriority() {
       setLoading(false);
 
       if (!response.ok) {
+        // Jika ada error validasi dari server, kembalikan ke form untuk ditampilkan
+        if (result.errors) {
+          return { success: false, errors: result.errors };
+        }
+        
+        // Jika error lain (bukan validasi), tampilkan Swal
         showAlert("Gagal!", result.message, "error");
-        return false;
+        return { success: false, errors: {}};
       }
-
-      showAlert("Berhasil!", "data priority diperbarui.", "success").then(() => {
+  
+      showAlert("Berhasil!", "Data priority diperbarui.", "success").then(() => {
         fetchPriority();
       });
 
-      return true;
+      return {success: true, errors: {}};
     } catch (error) {
       console.error("Gagal memperbarui priority:", error);
       setLoading(false);
@@ -103,7 +141,7 @@ export default function usePriority() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/priority/${id}`, {
+      const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/priority/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -116,7 +154,7 @@ export default function usePriority() {
         return false;
       }
 
-      showAlert("Berhasil!", "Karyawan telah dihapus (soft delete).", "success").then(() => {
+      showAlert("Berhasil!", "Priority telah dihapus.", "success").then(() => {
         fetchPriority();
       });
 
@@ -129,5 +167,5 @@ export default function usePriority() {
     }
   };
 
-  return { PriorityList, loading, fetchPriority, addPriority, updatePriority, deletePriority };
+  return { priorityList, priority, loading, fetchPriority, addPriority, updatePriority, deletePriority, selectPriority };
 }

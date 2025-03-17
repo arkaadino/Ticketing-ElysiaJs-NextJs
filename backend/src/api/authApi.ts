@@ -3,7 +3,18 @@ import { Karyawan } from "../models/karyawan";
 import jwt from "jsonwebtoken";
 import { cors } from "@elysiajs/cors";
 import { cookie } from "@elysiajs/cookie";
+import { JwtPayload } from 'jsonwebtoken';
 
+interface AccessTokenPayload extends JwtPayload {
+  id: number;
+  nik: string;
+  name: string;
+  role: string;
+}
+
+interface RefreshTokenPayload extends JwtPayload {
+  id: number;
+}
 const authApi = new Elysia({ prefix: "/auth" })
   .use(cors({
     origin: 'http://localhost:3000',
@@ -16,34 +27,52 @@ const authApi = new Elysia({ prefix: "/auth" })
       const { nik, password } = body;
 
       const user = await Karyawan.findOne({ where: { nik } });
-      if (!user) {
+      if (!user || user.is_active !== 1) {
         set.status = 400;
-        return { message: "NIK tidak ditemukan!" };
+        return { message: "Akun tidak ditemukan atau tidak aktif!" };
       }
-
+      
       const isMatch = await user.verifyPassword(password);
       if (!isMatch) {
         set.status = 400;
         return { message: "Password yang anda masukkan salah!" };
       }
 
-      if (!process.env.JWT_SECRET_KEY) {
-        throw new Error("JWT_SECRET_KEY is not defined");
+      if (!process.env.JWT_SECRET_KEY || !process.env.JWT_REFRESH_SECRET) {
+        throw new Error("JWT secret keys are not defined");
       }
 
-      const token = jwt.sign(
+      // Create access token (short-lived)
+      const accessToken = jwt.sign(
         { id: user.id, nik: user.nik, name: user.name, role: user.role },
         process.env.JWT_SECRET_KEY,
-        { expiresIn: "2h" }
+        { expiresIn: "2h" } // Shorter expiration time
       );
 
-      cookie.token.set({
-        value: token,
+      // Create refresh token (long-lived)
+      const refreshToken = jwt.sign(
+        { id: user.id },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: "1d" } // Much longer expiration
+      );
+
+      // Set cookies for both tokens
+      cookie.accessToken.set({
+        value: accessToken,
         httpOnly: true,
         path: "/",
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 2      
+        maxAge: 60 * 60 * 2
+      });
+
+      cookie.refreshToken.set({
+        value: refreshToken,
+        httpOnly: true,
+        path: "/",
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24
       });
 
       return JSON.stringify({ 
@@ -66,31 +95,85 @@ const authApi = new Elysia({ prefix: "/auth" })
     })
   })
 
+  .post("/refresh", async ({ cookie, set }) => {
+    try {
+        const refreshToken = cookie.refreshToken?.value;
+        
+        if (!refreshToken) {
+          set.status = 401;
+          return JSON.stringify({ message: "Refresh token tidak ditemukan" });
+        }
+
+        if (!process.env.JWT_REFRESH_SECRET || !process.env.JWT_SECRET_KEY) {
+          throw new Error("JWT secret keys are not defined");
+        }
+
+        // Verify the refresh token with proper typing
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET) as RefreshTokenPayload;
+        
+        // Now TypeScript knows that decoded.id exists
+        const user = await Karyawan.findOne({ where: { id: decoded.id } });
+        if (!user || user.is_active !== 1) {
+          set.status = 401;
+          return JSON.stringify({ message: "Akun tidak ditemukan atau tidak aktif" });
+        }
+
+          // Generate a new access token
+          const newAccessToken = jwt.sign(
+            { id: user.id, nik: user.nik, name: user.name, role: user.role },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: "15m" }
+          );
+
+          // Set the new access token cookie
+          cookie.accessToken.set({
+            value: newAccessToken,
+            httpOnly: true,
+            path: "/",
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 60 * 15 // 15 minutes
+          });
+
+          return JSON.stringify({ 
+            success: true,
+            message: "Token berhasil diperbarui" 
+          });
+        } catch (error) {
+          set.status = 401;
+          return JSON.stringify({ message: "Refresh token tidak valid atau sudah kedaluwarsa" });
+        }
+      })
+
   .post("/logout", ({ cookie }) => {
-    cookie.token.remove();
+    // Clear both tokens
+    cookie.accessToken.remove();
+    cookie.refreshToken.remove();
+    
     return JSON.stringify({ 
       success: true,
       message: "Sampai Jumpa Lagi!" 
     });
   })
 
-  .get("/me", async ({ cookie }) => {
+  .get("/me", async ({ cookie, set }) => {
     try {
-      const token = cookie.token?.value;
-      if (!token) {
-        return Response.json({ success: false, message: "Tidak ada token" }, { status: 401 });
+      const accessToken = cookie.accessToken?.value;
+      if (!accessToken) {
+        set.status = 401;
+        return JSON.stringify({ success: false, message: "Tidak ada token akses" });
       }
   
       if (!process.env.JWT_SECRET_KEY) {
         throw new Error("JWT_SECRET_KEY is not defined");
       }
   
-      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+      const decoded = jwt.verify(accessToken, process.env.JWT_SECRET_KEY) as AccessTokenPayload;
   
-      return Response.json({ success: true, user: decoded }, { status: 200 });
+      return JSON.stringify({ success: true, user: decoded });
     } catch (error) {
-      return Response.json({ success: false, message: "Token tidak valid atau sudah expired" }, { status: 403 });
+      set.status = 403;
+      return JSON.stringify({ success: false, message: "Token tidak valid atau sudah kedaluwarsa" });
     }
   });
-
 export default authApi;

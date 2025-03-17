@@ -1,8 +1,6 @@
-import { table } from "console";
 import { Model, Column, DataType, Table, PrimaryKey } from "sequelize-typescript"; 
 import { Status } from "./statuses";
 import { Category } from "./categories";
-import { Priority } from "./priority";
 import { Karyawan } from "./karyawan";
 
 export type TicketingEntity = {
@@ -14,7 +12,6 @@ export type TicketingEntity = {
     tanggal_keluhan?: Date;
     eskalasi: string;
     response: string;
-    pending: string;
     analisa: string;
     mulai_pengerjaan: Date | null;
     selesai_pengerjaan: Date | null;
@@ -94,12 +91,6 @@ export class Ticketing extends Model<TicketingEntity> {
         allowNull: false, // Tidak boleh kosong
     })
     response!: string;
-
-    @Column({
-        type: DataType.STRING,
-        allowNull: false, // Tidak boleh kosong
-    })
-    pending!: string;
 
     @Column({
         type: DataType.STRING,

@@ -34,7 +34,7 @@ const statusesApi = new Elysia({ prefix: "/statuses" })
   // GET - Ambil semua statuses
   .get("/", async ({ set }: { set: any }) => {
     try {
-      const statusList = await Status.findAll();
+      const statusList = await Status.findAll({where: {is_active: 1}});
       if (statusList.length === 0) {
         set.status = 400;
         return { success: false, message: "Data tidak ditemukan" };
@@ -72,9 +72,11 @@ const statusesApi = new Elysia({ prefix: "/statuses" })
         return { success: false, message: "Status tidak ditemukan" };
       }
 
+      // Allow name to be optional
       if (body.name && body.name.trim() === "") {
         return { success: false, message: "Field name tidak boleh kosong" };
       }
+
 
       await status.update(body);
       set.status = 200;

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { showAlert, showConfirm } from "@/components/ui/swal/swal";
+import { fetchWithRefresh } from "@/utils/api";
 
 export default function useAuth() {
-  const [user, setUser] = useState<{ name?: string; nik?: string } | null>(null);
+  const [user, setUser] = useState<{ name?: string; nik?: string; role?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -21,13 +22,35 @@ export default function useAuth() {
       const result = await response.json();
 
       if (result.success) {
+        // Simpan user data ke localStorage saat berhasil mendapatkan data
+        localStorage.setItem('userName', result.user.name);
+        localStorage.setItem('userNik', result.user.nik);
+        localStorage.setItem('userRole', result.user.role);
         setUser(result.user);
       } else {
-        setUser(null);
+        // Jika API call gagal, coba ambil dari localStorage
+        const userName = localStorage.getItem('userName');
+        const userNik = localStorage.getItem('userNik');
+        const userRole = localStorage.getItem('userRole');
+        
+        if (userName && userNik) {
+          setUser({ name: userName, nik: userNik, role: userRole || undefined });
+        } else {
+          setUser(null);
+        }
       }
     } catch (error) {
       console.error("Gagal mendapatkan data user:", error);
-      setUser(null);
+      // Jika terjadi error, coba ambil dari localStorage
+      const userName = localStorage.getItem('userName');
+      const userNik = localStorage.getItem('userNik');
+      const userRole = localStorage.getItem('userRole');
+      
+      if (userName && userNik) {
+        setUser({ name: userName, nik: userNik, role: userRole || undefined });
+      } else {
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -51,6 +74,14 @@ export default function useAuth() {
       if (!response.ok) {
         showAlert("Error!", result.message, "error");
         return false;
+      }
+
+      // Simpan data user ke localStorage saat login berhasil
+      if (result.success && result.user) {
+        localStorage.setItem('userName', result.user.name);
+        localStorage.setItem('userNik', result.user.nik);
+        localStorage.setItem('userRole', result.user.role);
+        setUser(result.user);
       }
 
       showAlert("Success!", "Selamat Datang!", "success").then(() => {
@@ -79,6 +110,10 @@ export default function useAuth() {
       const result = await response.json();
 
       if (result.success) {
+        // Hapus data dari localStorage saat logout
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userNik');
+        localStorage.removeItem('userRole');
         setUser(null);
         showAlert("Berhasil!", "Anda telah logout.", "success").then(() => {
           router.replace("/signin");

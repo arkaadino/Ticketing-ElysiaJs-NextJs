@@ -1,9 +1,9 @@
 import React, { FC } from "react";
 
 interface InputProps {
-  type?: "text" | "number" | "email" | "password" | "date" | "time" | string | number;
+  type?: "text" | "email" | "password" | "date" | "time" | "hidden" | "number";
   id?: string;
-  name?: string | number;
+  name?: string;
   placeholder?: string;
   defaultValue?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;

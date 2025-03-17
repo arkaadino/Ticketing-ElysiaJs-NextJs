@@ -1,10 +1,17 @@
+import type { Metadata } from "next";
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import KaryawanTable from "@/components/tables/KaryawanTable";
 import Button from "@/components/ui/button/Button";
 import React from "react";
 
-export default function BasicTables() {
+export const metadata: Metadata = {
+  title:
+    "LRS HelpDesk | Karyawan",
+  description: "This is the Karyawan Page",
+};
+
+export default function KaryawanPage() {
   return (
     <div>
       <PageBreadcrumb pageTitle="Karyawan" />

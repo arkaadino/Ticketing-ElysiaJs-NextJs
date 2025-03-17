@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import useAuth from "@/hooks/useAuth";
@@ -10,7 +10,26 @@ import useAuth from "@/hooks/useAuth";
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, loading, logout } = useAuth(); // Ambil data user dari useAuth
+  const [displayName, setDisplayName] = useState("User");
+  const [displayNik, setDisplayNik] = useState("N/A");
   const router = useRouter();
+
+  useEffect(() => {
+    // Prioritaskan data dari useAuth, fallback ke localStorage
+    if (user?.name) {
+      setDisplayName(user.name);
+    } else {
+      const storedName = localStorage.getItem('userName');
+      if (storedName) setDisplayName(storedName);
+    }
+
+    if (user?.nik) {
+      setDisplayNik(user.nik);
+    } else {
+      const storedNik = localStorage.getItem('userNik');
+      if (storedNik) setDisplayNik(storedNik);
+    }
+  }, [user]);
 
   function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.stopPropagation();
@@ -33,7 +52,7 @@ export default function UserDropdown() {
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
-          {loading ? "Loading..." : user?.name || "User"}
+          {loading ? "Loading..." : displayName}
         </span>
       </button>
 
@@ -44,10 +63,10 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {loading ? "Loading..." : user?.name || "User"}
+            {loading ? "Loading..." : displayName}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            {loading ? "Loading..." : user?.nik || "N/A"}
+            {loading ? "Loading..." : displayNik}
           </span>
         </div>
 

@@ -34,7 +34,7 @@ const categoriesApi = new Elysia({ prefix: "/categories" })
   // GET - Ambil semua categories
   .get("/", async ({ set }: { set: any }) => {
     try {
-      const categoryList = await Category.findAll();
+      const categoryList = await Category.findAll({where: {is_active: 1}});
       if (categoryList.length === 0) {
         set.status = 400;
         return { success: false, message: "Data tidak ditemukan" };
@@ -72,6 +72,7 @@ const categoriesApi = new Elysia({ prefix: "/categories" })
         return { success: false, message: "Kategori tidak ditemukan" };
       }
 
+      // Allow name to be optional
       if (body.name && body.name.trim() === "") {
         return { success: false, message: "Field name tidak boleh kosong" };
       }

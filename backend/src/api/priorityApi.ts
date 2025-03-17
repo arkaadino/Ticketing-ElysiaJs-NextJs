@@ -13,9 +13,15 @@ const priorityApi = new Elysia({ prefix: "/priority" })
     try {
       const errors: Record<string, string> = {};
 
-      if (!body.name || body.name.trim() === "") {
-        errors.name = "Field name harus diisi dan tidak boleh kosong";
+      if (!body.sla) {
+        errors.sla = "Field sla harus diisi dan tidak boleh kosong";
       }
+
+      if (!body.level) {
+        errors.level = "Field level harus diisi dan tidak boleh kosong";
+      }
+
+      if (!body.is_active || ![1, 0].includes(body.is_active)) errors.is_active = "Status keaktifan harus diisi";
 
       if (Object.keys(errors).length) {
         set.status = 400;
@@ -34,7 +40,7 @@ const priorityApi = new Elysia({ prefix: "/priority" })
   // GET - Ambil semua priorities
   .get("/", async ({ set }: { set: any }) => {
     try {
-      const priorityList = await Priority.findAll();
+      const priorityList = await Priority.findAll({where: {is_active: 1}});
       if (priorityList.length === 0) {
         set.status = 400;
         return { success: false, message: "Data tidak ditemukan" };
@@ -72,9 +78,11 @@ const priorityApi = new Elysia({ prefix: "/priority" })
         return { success: false, message: "Priority tidak ditemukan" };
       }
 
+      // Allow name to be optional
       if (body.name && body.name.trim() === "") {
         return { success: false, message: "Field name tidak boleh kosong" };
       }
+
 
       await priority.update(body);
       set.status = 200;

@@ -1,16 +1,23 @@
+import type { Metadata } from "next";
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import BasicTableOne from "@/components/tables/TicketingTable";
-
+import StatusesTable from "@/components/tables/StatusTable";
+import Button from "@/components/ui/button/Button";
 import React from "react";
 
-export default function BasicTables() {
+export const metadata: Metadata = {
+  title:
+    "LRS HelpDesk | Statuses",
+  description: "This is the Statuses Page",
+};
+
+export default function StatusesPage() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="Status" />
+      <PageBreadcrumb pageTitle="Statuses" />
       <div className="space-y-6">
-        <ComponentCard title="Data Karyawan">
-          <BasicTableOne />
+        <ComponentCard title="Statuses">
+          <StatusesTable />
         </ComponentCard>
       </div>
     </div>
