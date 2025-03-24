@@ -10,6 +10,7 @@ import KaryawanForm from "../forms/Karyawan/KaryawanForm";
 import StatusesForm from "../forms/Statuses/StatusesForm";
 import CategoriesForm from "../forms/Categories/CategoriesForm";
 import PriorityForm from "../forms/Priority/PriorityForm";
+import EskalasiForm from "../forms/Eskalasi/EskalasiForm";
 
 interface ComponentCardProps {
   title: string;
@@ -34,6 +35,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
     "priorities",
     "statuses",
     "categories",
+    "eskalasi",
   ];
 
   // Fungsi untuk menentukan apakah tombol harus ditampilkan
@@ -42,7 +44,7 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
   // Fungsi untuk menentukan form yang sesuai dengan halaman
   const getFormComponent = () => {
     switch (title.toLowerCase()) {
-      case "ticketings":
+      case "ticketing":
         return <TicketingForm closeModal={closeModal}/>;
       case "karyawan":
         return <KaryawanForm closeModal={closeModal}/>;
@@ -54,6 +56,8 @@ const ComponentCard: React.FC<ComponentCardProps> = ({
         return <CategoriesForm closeModal={closeModal}/>;
       case "categories":
         return <CategoriesForm closeModal={closeModal}/>;  
+      case "eskalasi":
+        return <EskalasiForm closeModal={closeModal}/>;    
       default:
         return null;
     }

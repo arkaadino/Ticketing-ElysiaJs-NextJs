@@ -20,7 +20,6 @@ const karyawanApi = new Elysia({ prefix: "/karyawan" })
       if (!body.position?.trim()) errors.position = "Jabatan harus diisi";
       if (!body.unit_kerja?.trim()) errors.unit_kerja = "Unit kerja harus diisi";
       if (!body.job_title?.trim()) errors.job_title = "Job title harus diisi";
-      if (!body.role || !["admin", "employee"].includes(body.role)) errors.role = "Role harus berupa 'admin' atau 'employee'";
       if (!body.is_active || ![1, 0].includes(body.is_active)) errors.is_active = "Status keaktifan harus diisi";
       if (!body.id_priorities) {
         errors.id_priorities = "Prioritas harus dipilih";
@@ -29,8 +28,7 @@ const karyawanApi = new Elysia({ prefix: "/karyawan" })
         if (!priorityExists) {
           errors.id_priorities = "Prioritas tidak valid";
         }
-      }      if (body.role === "admin" && !body.password) errors.password = "Password harus diisi untuk admin";
-
+      }      
       if (Object.keys(errors).length) {
         set.status = 400;
         return { 
@@ -110,10 +108,8 @@ const karyawanApi = new Elysia({ prefix: "/karyawan" })
         position: body.position ?? karyawan.position,
         unit_kerja: body.unit_kerja ?? karyawan.unit_kerja,
         job_title: body.job_title ?? karyawan.job_title,
-        role: body.role ?? karyawan.role,
         is_active: body.is_active ?? karyawan.is_active,
         id_priorities: body.id_priorities ?? karyawan.id_priorities,
-        password: body.password ?? karyawan.password,
       };
   
       await karyawan.update(updatedData);

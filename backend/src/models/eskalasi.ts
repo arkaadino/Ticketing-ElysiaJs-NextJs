@@ -1,14 +1,13 @@
     import { Model, Column, Table, DataType, BeforeSave } from "sequelize-typescript";
-    import { Priority } from "./priority";
 
-    export type KaryawanEntity = {
+    export type EskalasiEntity = {
         id?: number;
-        id_priorities?: number;
         nik: number;
         name: string;
         position: string;
         unit_kerja: string;
         job_title: string;
+        password?: string;
         is_active: number;
         created_at?: Date;
         updated_at?: Date;
@@ -16,29 +15,19 @@
     };
 
     @Table({
-        tableName: "karyawans",
+        tableName: "eskalasis",
         timestamps: true,
         createdAt: "created_at",
         updatedAt: "updated_at",
         deletedAt: "deleted_at",
     })
-    export class Karyawan extends Model<KaryawanEntity> {
+    export class Eskalasi extends Model<EskalasiEntity> {
         @Column({
             type: DataType.INTEGER,
             primaryKey: true,
             autoIncrement: true,
         })
         id!: number;
-
-        @Column({
-            type: DataType.INTEGER,
-            references: {
-                model: Priority,
-                key: "id",
-            },
-            allowNull: false,
-        })
-        id_priorities!: number;
 
         @Column({
             type: DataType.INTEGER,
@@ -71,6 +60,20 @@
         job_title!: string;
 
         @Column({
+            type: DataType.STRING,
+            allowNull: true,
+            set(value: string) {
+              // Jika ada nilai password baru, hash terlebih dahulu
+              if (value) {
+                // Gunakan Bun.password.hashSync jika tersedia, atau gunakan cara async dengan setter
+                const hashedPassword = Bun.password.hashSync(value);
+                this.setDataValue('password', hashedPassword);
+              }
+            }
+          })
+        password!: string;
+
+        @Column({
             type: DataType.TINYINT,
             defaultValue: 0,
             allowNull: false,
@@ -95,6 +98,11 @@
         })
         deleted_at!: Date | null;
 
+        // Method untuk verifikasi password
+        async verifyPassword(inputPassword: string): Promise<boolean> {
+            if (!this.password) return false;
+            return await Bun.password.verify(inputPassword, this.password);
+        }
     }
 
     

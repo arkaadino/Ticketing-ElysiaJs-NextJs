@@ -8,6 +8,7 @@ import statusesApi from "../api/statusesApi";
 import karyawanApi from "../api/karyawanApi";
 import categoriesApi from "../api/categoriesApi";
 import priorityApi from "../api/priorityApi";
+import eskalasiApi from "../api/eskalasiApi";
 
 
 
@@ -32,7 +33,8 @@ const server = new Elysia()
 .use(statusesApi)
 .use(karyawanApi)
 .use(categoriesApi)
-.use(priorityApi);
+.use(priorityApi)
+.use(eskalasiApi);
 
 
 export default server;

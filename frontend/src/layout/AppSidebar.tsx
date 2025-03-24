@@ -47,7 +47,8 @@ const dataitems: NavItem[] = [
     name: "Human Resources",
     subItems: [
       { name: "Karyawan", path: "/karyawan", pro: false },
-      { name: "Prioritas", path: "/karyawan/priorities", pro: false },
+      { name: "Prioritas", path: "/priorities", pro: false },
+      { name: "Eskalasi", path: "/eskalasi", pro: false },
     ],
   },
 

@@ -3,6 +3,7 @@ import { Status } from '../models/statuses'; // Adjusted path
 import { Category } from '../models/categories'; // Adjusted path
 import { Karyawan } from '../models/karyawan';
 import { Priority } from '../models/priority'; // Importing Priority model
+import { Eskalasi } from '../models/eskalasi';
 
 async function seedDatabase() {
     try {
@@ -38,14 +39,12 @@ async function seedDatabase() {
         // Create initial karyawan
         await Karyawan.bulkCreate([
             {
-              nik: 1123,
+              nik: 1123213,
               name: 'Budi Santoso',
               position: 'Staff IT',
               unit_kerja: 'Teknologi Informasi',
               job_title: 'Software Engineer',
               is_active: 1,
-              role: 'admin',
-              password: 'admin123',
               id_priorities: 1, // Assigning id_priorities
             },
             {
@@ -55,9 +54,19 @@ async function seedDatabase() {
               unit_kerja: 'Human Resources',
               job_title: 'HR Specialist',
               is_active: 1,
-              role: 'admin',
-              password: 'atmin1',
               id_priorities: 2, // Assigning id_priorities
+            },
+        ]);
+
+        await Eskalasi.bulkCreate([
+            {
+              nik: 1123132,
+              name: 'Bayu Andaika',
+              position: 'IT Helpdesk',
+              unit_kerja: 'Teknologi Informasi',
+              job_title: 'Software Engineer',
+              password: 'lrsjaya1',
+              is_active: 1,
             },
         ]);
 

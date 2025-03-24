@@ -2,17 +2,17 @@ import { Model, Column, DataType, Table, PrimaryKey } from "sequelize-typescript
 import { Status } from "./statuses";
 import { Category } from "./categories";
 import { Karyawan } from "./karyawan";
+import { Eskalasi } from "./eskalasi";
 
 export type TicketingEntity = {
     id?: number;
     id_karyawans?: number;
     id_categories?: number;
     id_statuses?: number;
+    id_eskalasi?: number;
     keluhan?: string;
     tanggal_keluhan?: Date;
-    eskalasi: string;
-    response: string;
-    analisa: string;
+    response: string | null;
     mulai_pengerjaan: Date | null;
     selesai_pengerjaan: Date | null;
     waktu_pengerjaan: Date | null;
@@ -69,6 +69,16 @@ export class Ticketing extends Model<TicketingEntity> {
     id_karyawans!: number;
 
     @Column({
+        type: DataType.INTEGER,
+        references: {
+            model: Eskalasi,
+            key: "id",
+        },
+        allowNull: false, // Tidak boleh kosong
+    }) 
+    id_eskalasis!: number;
+
+    @Column({
         type: DataType.STRING,
         allowNull: false, // Tidak boleh kosong
     })
@@ -82,21 +92,9 @@ export class Ticketing extends Model<TicketingEntity> {
 
     @Column({
         type: DataType.STRING,
-        allowNull: false, // Tidak boleh kosong
+        allowNull: true, // Tidak boleh kosong
     })
-    eskalasi!: string;
-
-    @Column({
-        type: DataType.STRING,
-        allowNull: false, // Tidak boleh kosong
-    })
-    response!: string;
-
-    @Column({
-        type: DataType.STRING,
-        allowNull: false, // Tidak boleh kosong
-    })
-    analisa!: string;
+    response!: string | null;
 
     @Column({
         type: DataType.DATE,

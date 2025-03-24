@@ -6,6 +6,7 @@ import { Category } from "../models/categories";
 import { Karyawan } from "../models/karyawan";
 import { Priority } from "../models/priority";
 import { Ticketing } from "../models/ticketing";
+import { Eskalasi } from "../models/eskalasi";
 
 const env = (process.env.NODE_ENV || "development") as keyof typeof dbConfig;
 const config = dbConfig[env];
@@ -16,7 +17,7 @@ const sequelize = new Sequelize({
     username: config.username,
     password: config.password || undefined,
     database: config.database,
-    models: [Status, Category, Priority, Karyawan, Ticketing], // Load model sebelum relasi dipanggil
+    models: [Status, Category, Priority, Karyawan, Eskalasi, Ticketing], // Load model sebelum relasi dipanggil
     logging: console.log, // Bisa dinonaktifkan di production
 });
 
@@ -29,6 +30,9 @@ function setupAssociations() {
 
     Category.hasMany(Ticketing, { foreignKey: "id_categories" });
     Ticketing.belongsTo(Category, { foreignKey: "id_categories" });
+
+    Eskalasi.hasMany(Ticketing, { foreignKey: "id_eskalasis" });
+    Ticketing.belongsTo(Eskalasi, { foreignKey: "id_eskalasis" });
 
     Priority.hasMany(Karyawan, { foreignKey: "id_priorities" });
     Karyawan.belongsTo(Priority, { foreignKey: "id_priorities" });

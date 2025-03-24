@@ -5,6 +5,7 @@ import { Priority } from "../models/priority";
 import { Category } from "../models/categories";
 import { Status } from "../models/statuses";
 import { Karyawan } from "../models/karyawan";
+import { Eskalasi } from "../models/eskalasi";
 
 const ticketingApi = new Elysia({ prefix: "/ticketings" })
   .use(cors({
@@ -40,6 +41,14 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
         const statusExists = await Status.findOne({ where: { id: body.id_statuses } });
         if (!statusExists) {
           errors.id_statuses = "Status tidak valid";
+        }
+      }
+      if (!body.id_eskalasis) {
+        errors.id_eskalasis = "Eskalasi harus dipilih";
+      } else {
+        const eskalasiExists = await Eskalasi.findOne({ where: { id: body.id_eskalasis } });
+        if (!eskalasiExists) {
+          errors.id_eskalasis = "Eskalasi tidak valid";
         }
       }
       if (!body.keluhan?.trim()) errors.keluhan = "Keluhan harus diisi";
@@ -78,6 +87,10 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
           },
           {
             model: Status,
+            attributes: ["id", "name"]
+          },
+          {
+            model: Eskalasi,
             attributes: ["id", "name"]
           }
         ],
@@ -127,6 +140,7 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
       if (body.id_categories && !body.id_categories) errors.id_categories = "ID Kategori harus dipilih";
       if (body.id_priorities && !body.id_priorities) errors.id_priorities = "Prioritas harus dipilih";
       if (body.id_statuses && !body.id_statuses) errors.id_statuses = "Status harus dipilih";
+      if (body.id_eskalasis && !body.id_eskalasis) errors.id_eskalasis = "Eskalasi harus dipilih";
       if (body.keluhan && !body.keluhan.trim()) errors.keluhan = "Keluhan harus diisi";
       if (body.eskalasi && !body.eskalasi.trim()) errors.eskalasi = "Eskalasi harus diisi";
       if (body.response && !body.response.trim()) errors.response = "Response harus diisi";

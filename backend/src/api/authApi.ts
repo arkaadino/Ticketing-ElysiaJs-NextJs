@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import { Karyawan } from "../models/karyawan";
+import { Eskalasi } from "../models/eskalasi";
 import jwt from "jsonwebtoken";
 import { cors } from "@elysiajs/cors";
 import { cookie } from "@elysiajs/cookie";
@@ -9,7 +9,6 @@ interface AccessTokenPayload extends JwtPayload {
   id: number;
   nik: string;
   name: string;
-  role: string;
 }
 
 interface RefreshTokenPayload extends JwtPayload {
@@ -26,7 +25,7 @@ const authApi = new Elysia({ prefix: "/auth" })
     try {
       const { nik, password } = body;
 
-      const user = await Karyawan.findOne({ where: { nik } });
+      const user = await Eskalasi.findOne({ where: { nik } });
       if (!user || user.is_active !== 1) {
         set.status = 400;
         return { message: "Akun tidak ditemukan atau tidak aktif!" };
@@ -44,7 +43,7 @@ const authApi = new Elysia({ prefix: "/auth" })
 
       // Create access token (short-lived)
       const accessToken = jwt.sign(
-        { id: user.id, nik: user.nik, name: user.name, role: user.role },
+        { id: user.id, nik: user.nik, name: user.name },
         process.env.JWT_SECRET_KEY,
         { expiresIn: "2h" } // Shorter expiration time
       );
@@ -81,13 +80,12 @@ const authApi = new Elysia({ prefix: "/auth" })
           id: user.id,
           nik: user.nik,
           name: user.name,
-          role: user.role
         }
       });
     } catch (error) {
+      console.error(error); // Tambahkan ini untuk melihat error
       set.status = 500;
-      return JSON.stringify({ message: "Internal server error" });
-    }
+      return JSON.stringify({ message: "Internal server error" });    }
   }, {
     body: t.Object({
       nik: t.String(),
@@ -112,7 +110,7 @@ const authApi = new Elysia({ prefix: "/auth" })
         const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET) as RefreshTokenPayload;
         
         // Now TypeScript knows that decoded.id exists
-        const user = await Karyawan.findOne({ where: { id: decoded.id } });
+        const user = await Eskalasi.findOne({ where: { id: decoded.id } });
         if (!user || user.is_active !== 1) {
           set.status = 401;
           return JSON.stringify({ message: "Akun tidak ditemukan atau tidak aktif" });
@@ -120,7 +118,7 @@ const authApi = new Elysia({ prefix: "/auth" })
 
           // Generate a new access token
           const newAccessToken = jwt.sign(
-            { id: user.id, nik: user.nik, name: user.name, role: user.role },
+            { id: user.id, nik: user.nik, name: user.name },
             process.env.JWT_SECRET_KEY,
             { expiresIn: "15m" }
           );
