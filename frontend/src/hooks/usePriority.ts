@@ -22,15 +22,19 @@ export default function usePriority() {
       const result = await response.json();
       if (result.success) {
         setPriorityList(result.data);
-      } else {
+      } else if (result.message !== "Data tidak ditemukan") {
+        // tampilkan error lain selain "Data tidak ditemukan"
         showAlert("Error!", result.message, "error");
+      } else {
+        // kalau data memang kosong, set jadi [] tanpa alert
+        setPriorityList([]);
       }
     } catch (error) {
       console.error("Gagal mengambil data priority:", error);
       showAlert("Error!", "Gagal mengambil data priority!", "error");
     } finally {
       setLoading(false);
-    }
+    }    
   };
 
     const selectPriority = useCallback(async (id: string): Promise<any | null> => {

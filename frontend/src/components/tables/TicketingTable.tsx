@@ -75,7 +75,6 @@ export default function ticketingTable() {
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{ticketing.Eskalasi?.name}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{ticketing.keluhan}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{ticketing.tanggal_keluhan}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{ticketing.eskalasi}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                     <Badge size="sm" color={ticketing.is_active ? "success" : "error"}>
                       {ticketing.is_active ? "Active" : "Inactive"}

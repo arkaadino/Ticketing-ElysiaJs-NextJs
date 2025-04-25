@@ -13,30 +13,39 @@ export default function useEskalasi() {
   }, []);
 
   // Fetch all active Eskalasi
-// Wrap fetchEskalasi with useCallback
-const fetchEskalasi = useCallback(async () => {
-  setLoading(true);
-  try {
-    const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/eskalasi`, {
-      method: "GET",
-      credentials: "include",
-    });
+  const fetchEskalasi = async () => {
+    try {
+      setLoading(true);
 
-    const result = await response.json();
-    if (result.success) {
-      setEskalasiList(result.data);
-    } else {
-      showAlert("Error!", result.message, "error");
+      const response = await fetchWithRefresh(
+        `${process.env.NEXT_PUBLIC_API_URL}/eskalasi`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Data ada
+        setEskalasiList(result.data);
+      } else if (result.message !== "Data tidak ditemukan") {
+        // Hanya munculkan alert kalau error-nya bukan "Data tidak ditemukan"
+        showAlert("Error!", result.message, "error");
+      } else {
+        // Kalau memang kosong, set jadi array kosong tanpa alert
+        setEskalasiList([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch eskalasi:", error);
+      console.error("Error details:", JSON.stringify(error));
+      showAlert("Error!", "Failed to fetch eskalasi!", "error");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Failed to fetch eskalasi:", error);
-    console.error("Error details:", JSON.stringify(error));
-    showAlert("Error!", "Failed to fetch eskalasi!", "error");
-  } finally {
-    setLoading(false);
-  }
-}, []); // Empty dependency array as this doesn't depend on any props or state
-  // Select a specific Eskalasi by ID
+  };  
+// Select a specific Eskalasi by ID
   const selectEskalasi = useCallback(async (id: string): Promise<any | null> => {
     setLoading(true);
     try {

@@ -23,15 +23,19 @@ export default function useStatuses() {
       const result = await response.json();
       if (result.success) {
         setStatusesList(result.data);
-      } else {
+      } else if (result.message !== "Data tidak ditemukan") {
+        // tampilkan error lain selain "Data tidak ditemukan"
         showAlert("Error!", result.message, "error");
+      } else {
+        // kalau data memang kosong, set jadi [] tanpa alert
+        setStatusesList([]);
       }
     } catch (error) {
-      console.error("Gagal mengambil data statuses:", error);
-      showAlert("Error!", "Gagal mengambil data statuses!", "error");
+      console.error("Gagal mengambil data status:", error);
+      showAlert("Error!", "Gagal mengambil data status!", "error");
     } finally {
       setLoading(false);
-    }
+    }    
   };
 
     const selectStatuses = useCallback(async (id: string): Promise<any | null> => {

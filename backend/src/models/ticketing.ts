@@ -45,6 +45,7 @@ export class Ticketing extends Model<TicketingEntity> {
             key: "id",
         },
         allowNull: false, // Tidak boleh kosong
+        defaultValue: 3,
     }) 
     id_statuses!: number;
 
@@ -74,10 +75,11 @@ export class Ticketing extends Model<TicketingEntity> {
             model: Eskalasi,
             key: "id",
         },
-        allowNull: false, // Tidak boleh kosong
+        allowNull: true, // Pastikan ini true
+        defaultValue: null, // Tambahkan ini
     }) 
-    id_eskalasis!: number;
-
+    id_eskalasis!: number | null;
+    
     @Column({
         type: DataType.STRING,
         allowNull: false, // Tidak boleh kosong

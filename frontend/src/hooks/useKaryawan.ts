@@ -9,34 +9,41 @@ export default function useKaryawan() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchKaryawan(); // Fetch karyawan data on initial load
+    fetchKaryawan(); 
   }, []);
 
-  // Fetch all active karyawan
-// Wrap fetchKaryawan with useCallback
-const fetchKaryawan = useCallback(async () => {
-  setLoading(true);
-  try {
-    const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/karyawan`, {
-      method: "GET",
-      credentials: "include",
-    });
+  const fetchKaryawan = async () => {
+    try {
+      setLoading(true);
 
-    const result = await response.json();
-    if (result.success) {
-      setKaryawanList(result.data);
-    } else {
-      showAlert("Error!", result.message, "error");
+      const response = await fetchWithRefresh(
+        `${process.env.NEXT_PUBLIC_API_URL}/karyawan`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Data ada, langsung set
+        setKaryawanList(result.data);
+      } else if (result.message !== "Data tidak ditemukan") {
+        // Hanya munculkan alert untuk error selain "Data tidak ditemukan"
+        showAlert("Error!", result.message, "error");
+      } else {
+        // Kalau memang kosong, set jadi [] tanpa alert
+        setKaryawanList([]);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil data karyawan:", error);
+      showAlert("Error!", "Gagal mengambil data karyawan!", "error");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Failed to fetch karyawan:", error);
-    console.error("Error details:", JSON.stringify(error));
-    showAlert("Error!", "Failed to fetch karyawan!", "error");
-  } finally {
-    setLoading(false);
-  }
-}, []); // Empty dependency array as this doesn't depend on any props or state
-  // Select a specific karyawan by ID
+  };
+
   const selectKaryawan = useCallback(async (id: string): Promise<any | null> => {
     setLoading(true);
     try {
@@ -62,7 +69,6 @@ const fetchKaryawan = useCallback(async () => {
     }
   }, []);
 
-// 🔥 Tambah karyawan baru
   const addKaryawan = async (data: any) => {
     setLoading(true);
     try {
@@ -97,7 +103,7 @@ const fetchKaryawan = useCallback(async () => {
       return { success: false, errors: {} };
     }
   };
-  // Update an existing karyawan
+
   const updateKaryawan = async (id: string, data: any) => {
     setLoading(true);
     try {
@@ -133,7 +139,6 @@ const fetchKaryawan = useCallback(async () => {
     }
   };
 
-  // Soft delete a karyawan
   const deleteKaryawan = async (id: string) => {
     const confirm = await showConfirm("Confirmation", "Are you sure you want to delete this karyawan?");
     if (!confirm) return;

@@ -13,10 +13,10 @@ async function seedDatabase() {
 
         // Create initial statuses
         await Status.bulkCreate([
-            { name: 'Selesai', is_active: 1 },
+            { name: 'Completed', is_active: 1 },
             { name: 'Pending', is_active: 1 },
             { name: 'Open', is_active: 1 },
-            { name: 'On Going', is_active: 1 },
+            { name: 'Ongoing', is_active: 1 },
         ]);
 
         // Create initial categories
@@ -60,7 +60,7 @@ async function seedDatabase() {
 
         await Eskalasi.bulkCreate([
             {
-              nik: 1123132,
+              nik: 123456,
               name: 'Bayu Andaika',
               position: 'IT Helpdesk',
               unit_kerja: 'Teknologi Informasi',

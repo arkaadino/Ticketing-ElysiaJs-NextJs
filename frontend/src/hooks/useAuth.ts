@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { showAlert, showConfirm } from "@/components/ui/swal/swal";
-import { fetchWithRefresh } from "@/utils/api";
 
 export default function useAuth() {
-  const [user, setUser] = useState<{ name?: string; nik?: string; role?: string } | null>(null);
+  const [user, setUser] = useState<{ id?: number; name?: string; nik?: string; role?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    getUser(); // 🔥 Fetch user saat halaman pertama kali dimuat
+    getUser();
   }, []);
 
   const getUser = async () => {
@@ -22,32 +21,32 @@ export default function useAuth() {
       const result = await response.json();
 
       if (result.success) {
-        // Simpan user data ke localStorage saat berhasil mendapatkan data
+        localStorage.setItem('userId', result.user.id);
         localStorage.setItem('userName', result.user.name);
         localStorage.setItem('userNik', result.user.nik);
         localStorage.setItem('userRole', result.user.role);
         setUser(result.user);
       } else {
-        // Jika API call gagal, coba ambil dari localStorage
+        const userId = localStorage.getItem('userId');
         const userName = localStorage.getItem('userName');
         const userNik = localStorage.getItem('userNik');
         const userRole = localStorage.getItem('userRole');
-        
-        if (userName && userNik) {
-          setUser({ name: userName, nik: userNik, role: userRole || undefined });
+
+        if (userId && userName && userNik) {
+          setUser({ id: parseInt(userId), name: userName, nik: userNik, role: userRole || undefined });
         } else {
           setUser(null);
         }
       }
     } catch (error) {
       console.error("Gagal mendapatkan data user:", error);
-      // Jika terjadi error, coba ambil dari localStorage
+      const userId = localStorage.getItem('userId');
       const userName = localStorage.getItem('userName');
       const userNik = localStorage.getItem('userNik');
       const userRole = localStorage.getItem('userRole');
-      
-      if (userName && userNik) {
-        setUser({ name: userName, nik: userNik, role: userRole || undefined });
+
+      if (userId && userName && userNik) {
+        setUser({ id: parseInt(userId), name: userName, nik: userNik, role: userRole || undefined });
       } else {
         setUser(null);
       }
@@ -76,8 +75,8 @@ export default function useAuth() {
         return false;
       }
 
-      // Simpan data user ke localStorage saat login berhasil
       if (result.success && result.user) {
+        localStorage.setItem('userId', result.user.id);
         localStorage.setItem('userName', result.user.name);
         localStorage.setItem('userNik', result.user.nik);
         localStorage.setItem('userRole', result.user.role);
@@ -110,7 +109,7 @@ export default function useAuth() {
       const result = await response.json();
 
       if (result.success) {
-        // Hapus data dari localStorage saat logout
+        localStorage.removeItem('userId');
         localStorage.removeItem('userName');
         localStorage.removeItem('userNik');
         localStorage.removeItem('userRole');

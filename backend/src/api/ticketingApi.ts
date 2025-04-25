@@ -14,10 +14,11 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
   }))
 
   // POST - Tambah tiket baru
-  .post("/", async ({ body, set }: { body: any; set: any }) => {
+  .post("/", async ({ body, set }: { body: any; set: any ; user?: any}) => {
     try {
-      const errors: Record<string, string> = {}; // Declare errors object
-
+      const errors: Record<string, string> = {}; 
+  
+      // Validasi wajib
       if (!body.id_karyawans) errors.id_karyawans = "ID Karyawan harus diisi";
       if (!body.id_categories) {
         errors.id_categories = "ID Kategori harus dipilih";
@@ -27,50 +28,44 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
           errors.id_categories = "Kategori tidak valid";
         }
       }
-      if (!body.id_priorities) {
-        errors.id_priorities = "Prioritas harus dipilih";
-      } else {
-        const priorityExists = await Priority.findOne({ where: { id: body.id_priorities } });
-        if (!priorityExists) {
-          errors.id_priorities = "Prioritas tidak valid";
-        }
-      }
-      if (!body.id_statuses) {
-        errors.id_statuses = "Status harus dipilih";
-      } else {
-        const statusExists = await Status.findOne({ where: { id: body.id_statuses } });
-        if (!statusExists) {
-          errors.id_statuses = "Status tidak valid";
-        }
-      }
-      if (!body.id_eskalasis) {
-        errors.id_eskalasis = "Eskalasi harus dipilih";
-      } else {
-        const eskalasiExists = await Eskalasi.findOne({ where: { id: body.id_eskalasis } });
-        if (!eskalasiExists) {
-          errors.id_eskalasis = "Eskalasi tidak valid";
-        }
-      }
       if (!body.keluhan?.trim()) errors.keluhan = "Keluhan harus diisi";
-      if (!body.eskalasi?.trim()) errors.eskalasi = "Eskalasi harus diisi";
-      if (!body.response?.trim()) errors.response = "Response harus diisi";
-      if (!body.analisa?.trim()) errors.analisa = "Analisa harus diisi";
-      if (body.is_active === undefined) errors.is_active = "Status keaktifan harus diisi";
-
-      if (Object.keys(errors).length) {
-        set.status = 400;
-        return { success: false, message: "Gagal menambahkan tiket, periksa input!", errors };
-      }
-
-      const newTicket = await Ticketing.create(body);
+  
+      // Tambahkan default values yang pasti dibutuhkan
+      const ticketData = {
+        id_karyawans: body.id_karyawans,
+        id_categories: body.id_categories,
+        keluhan: body.keluhan,
+        tanggal_keluhan: new Date(), // Tambahkan tanggal keluhan
+        id_statuses: 3, // Default status Open
+        is_active: 1, // Default aktif
+        id_eskalasis:  body.id_eskalasis, // Default null
+        response: null,
+        mulai_pengerjaan: null,
+        selesai_pengerjaan: null,
+        waktu_pengerjaan: null,
+        ...body // Spread body untuk menimpa default values jika ada
+      };
+  
+      console.log("Ticket Data to Create:", ticketData); // Log data yang akan dibuat
+  
+      const newTicket = await Ticketing.create(ticketData);
+      
       set.status = 200;
-      return { success: true, message: "Tiket berhasil ditambahkan", data: newTicket };
+      return { 
+        success: true, 
+        message: "Tiket berhasil ditambahkan", 
+        data: newTicket 
+      };
     } catch (error) {
+      console.error("Error creating ticket:", error); // Log full error
       set.status = 500;
-      return { success: false, message: "Terjadi kesalahan server" };
+      return { 
+        success: false, 
+        message: "Terjadi kesalahan server",
+        errorDetails: error instanceof Error ? error.message : String(error)
+      };
     }
   })
-
   // GET - Ambil semua tiket
   .get("/", async ({ set }: { set: any }) => {
     try {
@@ -128,39 +123,71 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
   // PATCH - Update tiket
   .patch("/:id", async ({ params, body, set }: { params: any; body: any; set: any }) => {
     try {
-      const errors: Record<string, string> = {}; // Declare errors object
+      const errors: Record<string, string> = {}; 
       const ticketing = await Ticketing.findOne({ where: { id: params.id } });
       if (!ticketing) {
         set.status = 400;
         return { success: false, message: "Tiket tidak ditemukan" };
       }
 
-      // Allow all fields to be optional
-      if (body.id_karyawans && !body.id_karyawans) errors.id_karyawans = "ID Karyawan harus diisi";
-      if (body.id_categories && !body.id_categories) errors.id_categories = "ID Kategori harus dipilih";
-      if (body.id_priorities && !body.id_priorities) errors.id_priorities = "Prioritas harus dipilih";
-      if (body.id_statuses && !body.id_statuses) errors.id_statuses = "Status harus dipilih";
-      if (body.id_eskalasis && !body.id_eskalasis) errors.id_eskalasis = "Eskalasi harus dipilih";
-      if (body.keluhan && !body.keluhan.trim()) errors.keluhan = "Keluhan harus diisi";
-      if (body.eskalasi && !body.eskalasi.trim()) errors.eskalasi = "Eskalasi harus diisi";
-      if (body.response && !body.response.trim()) errors.response = "Response harus diisi";
-      if (body.analisa && !body.analisa.trim()) errors.analisa = "Analisa harus diisi";
-      if (body.is_active === undefined) errors.is_active = "Status keaktifan harus diisi";
-
-      if (Object.keys(errors).length) {
-        set.status = 400;
-        return { success: false, message: "Gagal memperbarui tiket, periksa input!", errors };
+      // Validasi kondisional untuk id_eskalasis
+      if (body.id_eskalasis) {
+        const eskalasiExists = await Eskalasi.findOne({ where: { id: body.id_eskalasis } });
+        if (!eskalasiExists) {
+          errors.id_eskalasis = "Eskalasi tidak valid";
+        }
       }
 
+      // Validasi untuk field lain yang diupdate
+      if (body.id_statuses) {
+        const statusExists = await Status.findOne({ where: { id: body.id_statuses } });
+        if (!statusExists) {
+          errors.id_statuses = "Status tidak valid";
+        }
+      }
+
+      // Tambahkan validasi untuk field lain sesuai kebutuhan
+      if (body.response && !body.response.trim()) {
+        errors.response = "Response harus diisi";
+      }
+
+      if (Object.keys(errors).length) {
+        set.status = 401;
+        return { 
+          success: false, 
+          message: "Gagal memperbarui tiket, periksa input!", 
+          errors 
+        };
+      }
+
+      // Update tiket dengan data baru
       await ticketing.update(body);
+
+      // Ambil data tiket terbaru setelah update
+      const updatedTicket = await Ticketing.findOne({ 
+        where: { id: params.id },
+        include: [
+          { model: Eskalasi, attributes: ["id", "name"] },
+          { model: Status, attributes: ["id", "name"] }
+        ]
+      });
+
       set.status = 200;
-      return { success: true, message: "Tiket berhasil diperbarui", data: ticketing };
+      return { 
+        success: true, 
+        message: "Tiket berhasil diperbarui", 
+        data: updatedTicket 
+      };
     } catch (error) {
-      set.status = 400;
-      return { success: false, message: "Gagal memperbarui tiket" };
+      console.error("Error updating ticket:", error);
+      set.status = 500;
+      return { 
+        success: false, 
+        message: "Gagal memperbarui tiket",
+        errorDetails: error instanceof Error ? error.message : String(error)
+      };
     }
   })
-
   // DELETE - Soft delete tiket
   .delete("/:id", async ({ params, set }: { params: any; set: any }) => {
     try {
@@ -177,6 +204,28 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
       set.status = 400;
       return { success: false, message: "Gagal menghapus tiket" };
     }
-  });
+    
+  })
 
+  .get('/stats', async () => {
+    const completedCount = await Ticketing.count({
+      include: [{
+        model: Status,
+        where: { name: 'Completed' },
+      }],
+    });
+  
+    const ongoingCount = await Ticketing.count({
+      include: [{
+        model: Status,
+        where: { name: 'Ongoing' },
+      }],
+    });
+  
+    return {
+      completed: completedCount,
+      ongoing: ongoingCount,
+    };
+  });
+    
 export default ticketingApi;

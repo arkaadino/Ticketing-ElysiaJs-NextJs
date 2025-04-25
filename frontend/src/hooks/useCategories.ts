@@ -15,20 +15,32 @@ export default function useCategories() {
   // 🔥 Fetch semua Categories yang aktif
   const fetchCategories = async () => {
     try {
-      const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/categories`, {
-        method: "GET",
-        credentials: "include",
-      });
-
+      setLoading(true);
+  
+      const response = await fetchWithRefresh(
+        `${process.env.NEXT_PUBLIC_API_URL}/categories`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+  
       const result = await response.json();
+  
       if (result.success) {
+        // Data ada
         setCategoriesList(result.data);
-      } else {
+      } else if (result.message !== "Data tidak ditemukan") {
+        // Hanya munculkan alert kalau error-nya bukan "Data tidak ditemukan"
         showAlert("Error!", result.message, "error");
+      } else {
+        // Kalau memang kosong, set jadi array kosong tanpa alert
+        setCategoriesList([]);
       }
     } catch (error) {
-      console.error("Gagal mengambil data categories:", error);
-      showAlert("Error!", "Gagal mengambil data categories!", "error");
+      console.error("Failed to fetch categories:", error);
+      console.error("Error details:", JSON.stringify(error));
+      showAlert("Error!", "Failed to fetch categories!", "error");
     } finally {
       setLoading(false);
     }

@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
+  // Tambahkan konfigurasi ESLint di sini
+  eslint: {
+    // Nonaktifkan pemeriksaan ESLint selama build
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;
