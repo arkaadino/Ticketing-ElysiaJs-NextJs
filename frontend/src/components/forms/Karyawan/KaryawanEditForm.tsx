@@ -22,7 +22,6 @@ export default function EditKaryawanForm({ id, initialData, closeModal }: Karyaw
   const [position, setPosition] = useState(initialData?.position || "");
   const [unit_kerja, setUnitKerja] = useState(initialData?.unit_kerja || "");
   const [job_title, setJobTitle] = useState(initialData?.job_title || "");
-  const [role, setRole] = useState(initialData?.role || "");
   const [password, setPassword] = useState(""); // Password is always empty initially
   const [is_active, setIsActive] = useState<number | null>(initialData?.is_active ? 1 : 0);
   const [id_priorities, setIdPriorities] = useState(initialData?.id_priorities || 0);
@@ -38,16 +37,11 @@ export default function EditKaryawanForm({ id, initialData, closeModal }: Karyaw
       position,
       unit_kerja,
       job_title,
-      role,
       is_active: is_active ? 1 : 0,
       id_priorities: Number(id_priorities),
     };
 
     // Only include password if it has been provided
-    if (password && role === "admin") {
-      formData.password = password;
-    }
-
     const success = await updateKaryawan(id, formData);
     if (success) closeModal();
   };
@@ -80,6 +74,7 @@ export default function EditKaryawanForm({ id, initialData, closeModal }: Karyaw
                 onChange={(e) => setNik(e.target.value)} 
                 placeholder="NIK" 
                 hint={`Original: ${initialData?.nik || 'None'}`}
+                type="number"
               />
               {errors.nik && <p className="text-red-500">{errors.nik}</p>}
             </div>
@@ -123,31 +118,6 @@ export default function EditKaryawanForm({ id, initialData, closeModal }: Karyaw
               />
               {errors.job_title && <p className="text-red-500">{errors.job_title}</p>}
             </div>
-
-            <div className="col-span-1">
-              <Select
-                options={[
-                  { value: "admin", label: "Admin" },
-                  { value: "employee", label: "Employee" },
-                ]}
-                onChange={(value) => setRole(value)}
-                placeholder="Pilih Role yang Tepat"
-                defaultValue={role}
-              />
-              {errors.role && <p className="text-red-500">{errors.role}</p>}
-            </div>
-
-            {role === "admin" && (
-              <div className="col-span-1">
-                <Input 
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                  placeholder="Password Baru" 
-                  type="password" 
-                />
-                {errors.password && <p className="text-red-500">{errors.password}</p>}
-              </div>
-            )}
 
             <div className="col-span-1">
               <Select

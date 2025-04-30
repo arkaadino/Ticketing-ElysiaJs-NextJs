@@ -94,7 +94,7 @@ const categoriesApi = new Elysia({ prefix: "/categories" })
         set.status = 400;
         return { success: false, message: "Kategori tidak ditemukan" };
       }
-      await category.destroy();
+      await category.update({ is_active: 0, deleted_at: new Date() });
       set.status = 200;
       return { success: true, message: "Kategori berhasil dihapus" };
     } catch (error) {

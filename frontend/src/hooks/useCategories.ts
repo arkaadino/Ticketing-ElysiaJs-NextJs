@@ -7,16 +7,15 @@ export default function useCategories() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any | null>(null);
 
-
   useEffect(() => {
-    fetchCategories(); // 🔥 Ambil data categories saat pertama kali load
+    fetchCategories();
   }, []);
 
-  // 🔥 Fetch semua Categories yang aktif
+  // 🔥 Fetch semua Categories
   const fetchCategories = async () => {
     try {
       setLoading(true);
-  
+
       const response = await fetchWithRefresh(
         `${process.env.NEXT_PUBLIC_API_URL}/categories`,
         {
@@ -24,92 +23,85 @@ export default function useCategories() {
           credentials: "include",
         }
       );
-  
+
       const result = await response.json();
-  
+
       if (result.success) {
-        // Data ada
         setCategoriesList(result.data);
       } else if (result.message !== "Data tidak ditemukan") {
-        // Hanya munculkan alert kalau error-nya bukan "Data tidak ditemukan"
         showAlert("Error!", result.message, "error");
       } else {
-        // Kalau memang kosong, set jadi array kosong tanpa alert
         setCategoriesList([]);
       }
     } catch (error) {
-      console.error("Failed to fetch categories:", error);
-      console.error("Error details:", JSON.stringify(error));
-      showAlert("Error!", "Failed to fetch categories!", "error");
+      console.error("Error mengambil data kategori:", error);
+      showAlert("Error!", "Gagal mengambil data kategori!", "error");
     } finally {
       setLoading(false);
     }
   };
 
-    const selectCategories = useCallback(async (id: string): Promise<any | null> => {
-      setLoading(true);
-      try {
-        const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/categories/${id}`, {
-          method: "GET",
-          credentials: "include",
-        });
-  
-        const result = await response.json();
-        if (result.success) {
-          setCategories(result.data || null);
-          return result.data; // Return the data
-        } else {
-          showAlert("Error!", result.message, "error");
-          return null;
-        }
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        showAlert("Error!", "Failed to fetch categories!", "error");
+  const selectCategories = useCallback(async (id: string): Promise<any | null> => {
+    setLoading(true);
+    try {
+      const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/categories/${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setCategories(result.data || null);
+        return result.data;
+      } else {
+        showAlert("Error!", result.message, "error");
         return null;
-      } finally {
-        setLoading(false);
       }
-    }, []);
-  
-    
-// 🔥 Tambah categories baru
-const addCategories = async (data: any) => {
-  setLoading(true);
-  try {
-    const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/categories`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(data),
-    });
-
-    const result = await response.json();
-    setLoading(false);
-
-    if (!response.ok) {
-      // Jika ada error validasi dari server, kembalikan ke form untuk ditampilkan
-      if (result.errors) {
-        return { success: false, errors: result.errors };
-      }
-      
-      // Jika error lain (bukan validasi), tampilkan Swal
-      showAlert("Gagal!", result.message, "error");
-      return { success: false, errors: {}};
+    } catch (error) {
+      console.error("Error mengambil detail kategori:", error);
+      showAlert("Error!", "Gagal mengambil detail kategori!", "error");
+      return null;
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    showAlert("Berhasil!", "categories berhasil ditambahkan.", "success").then(() => {
-      fetchCategories(); // Refresh data
-    });
+  // 🔥 Tambah kategori baru
+  const addCategories = async (data: any) => {
+    setLoading(true);
+    try {
+      const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/categories`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
 
-    return { success: true, errors: {}};
-  } catch (error) {
-    console.error("Gagal menambahkan categories:", error);
-    setLoading(false);
-    showAlert("Error!", "Terjadi kesalahan, coba lagi!", "error");
-    return { success: false };
-  }
-};
-  // 🔥 Update categories
+      const result = await response.json();
+      setLoading(false);
+
+      if (!response.ok) {
+        if (result.errors) {
+          return { success: false, errors: result.errors };
+        }
+        showAlert("Gagal!", result.message, "error");
+        return { success: false, errors: {} };
+      }
+
+      showAlert("Berhasil!", "Kategori berhasil ditambahkan.", "success").then(() => {
+        fetchCategories();
+      });
+
+      return { success: true, errors: {} };
+    } catch (error) {
+      console.error("Error menambahkan kategori:", error);
+      setLoading(false);
+      showAlert("Error!", "Terjadi error, coba lagi!", "error");
+      return { success: false };
+    }
+  };
+
+  // 🔥 Update kategori
   const updateCategories = async (id: string, data: any) => {
     setLoading(true);
     try {
@@ -124,32 +116,29 @@ const addCategories = async (data: any) => {
       setLoading(false);
 
       if (!response.ok) {
-        // Jika ada error validasi dari server, kembalikan ke form untuk ditampilkan
         if (result.errors) {
           return { success: false, errors: result.errors };
         }
-        
-        // Jika error lain (bukan validasi), tampilkan Swal
         showAlert("Gagal!", result.message, "error");
-        return { success: false, errors: {}};
+        return { success: false, errors: {} };
       }
-  
-      showAlert("Berhasil!", "data categories diperbarui.", "success").then(() => {
+
+      showAlert("Berhasil!", "Kategori berhasil diperbarui.", "success").then(() => {
         fetchCategories();
       });
 
-      return {success: true, errors: {}};
+      return { success: true, errors: {} };
     } catch (error) {
-      console.error("Gagal memperbarui categories:", error);
+      console.error("Error memperbarui kategori:", error);
       setLoading(false);
-      showAlert("Error!", "Terjadi kesalahan, coba lagi!", "error");
-      return false;
+      showAlert("Error!", "Terjadi error, coba lagi!", "error");
+      return { success: false };
     }
   };
 
-  // 🔥 Soft delete categories
+  // 🔥 Soft delete kategori
   const deleteCategories = async (id: string) => {
-    const confirm = await showConfirm("Konfirmasi", "Apakah Anda yakin ingin menghapus categories ini?");
+    const confirm = await showConfirm("Konfirmasi", "Apakah Anda yakin ingin menghapus kategori ini?");
     if (!confirm) return;
 
     setLoading(true);
@@ -167,18 +156,27 @@ const addCategories = async (data: any) => {
         return false;
       }
 
-      showAlert("Berhasil!", "Categories telah dihapus.", "success").then(() => {
+      showAlert("Berhasil!", "Kategori berhasil dihapus.", "success").then(() => {
         fetchCategories();
       });
 
       return true;
     } catch (error) {
-      console.error("Gagal menghapus categories:", error);
+      console.error("Error menghapus kategori:", error);
       setLoading(false);
-      showAlert("Error!", "Terjadi kesalahan, coba lagi!", "error");
+      showAlert("Error!", "Terjadi error, coba lagi!", "error");
       return false;
     }
   };
 
-  return { categoriesList, categories, loading, fetchCategories, addCategories, updateCategories, deleteCategories, selectCategories };
+  return {
+    categoriesList,
+    categories,
+    loading,
+    fetchCategories,
+    addCategories,
+    updateCategories,
+    deleteCategories,
+    selectCategories,
+  };
 }

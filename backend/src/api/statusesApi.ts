@@ -95,7 +95,7 @@ const statusesApi = new Elysia({ prefix: "/statuses" })
         set.status = 400;
         return { success: false, message: "Status tidak ditemukan" };
       }
-      await status.destroy();
+      await status.update({ is_active: 0, deleted_at: new Date() });
       set.status = 200;
       return { success: true, message: "Status berhasil dihapus" };
     } catch (error) {

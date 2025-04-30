@@ -17,6 +17,7 @@ interface InputProps {
   hint?: string;
   isSignIn?: boolean; // Tambahkan prop khusus sign-in
   value?: string | number;  // Add this line for controlled input
+  readOnly?: boolean;  // Tambahkan properti readOnly
 }
 
 const Input: FC<InputProps> = ({
@@ -25,6 +26,7 @@ const Input: FC<InputProps> = ({
   name,
   placeholder,
   defaultValue,
+  value,
   onChange,
   className = "",
   min,
@@ -35,6 +37,7 @@ const Input: FC<InputProps> = ({
   error = false,
   hint,
   isSignIn = false, // Default false
+  readOnly = false,  // Default false
 }) => {
   let inputClasses = `h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-none focus:ring dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${className}`;
 
@@ -61,11 +64,13 @@ const Input: FC<InputProps> = ({
         name={name}
         placeholder={placeholder}
         defaultValue={defaultValue}
+        value={value}
         onChange={onChange}
         min={min}
         max={max}
         step={step}
         disabled={disabled}
+        readOnly={readOnly}  // Menambahkan properti readOnly di sini
         className={inputClasses}
       />
 

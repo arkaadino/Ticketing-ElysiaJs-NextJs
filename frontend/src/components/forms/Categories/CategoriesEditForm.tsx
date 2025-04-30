@@ -40,7 +40,7 @@ export default function EditCategoriesForm({id, initialData, closeModal }: {id: 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <h4 className="mb-6 text-lg font-medium text-gray-800 dark:text-white/90">
-        Tambah Categories
+        Edit Categories
       </h4>
 
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
@@ -48,8 +48,8 @@ export default function EditCategoriesForm({id, initialData, closeModal }: {id: 
           <Input 
             value={name} 
             onChange={(e) => setName(e.target.value)} 
-            placeholder="name"
-            hint={`ORIGINAL: ${initialData?.name || ''}`}
+            placeholder="Name"
+            hint={`Original: ${initialData?.name || ''}`}
           />
           {errors.name && <p className="text-red-500">{errors.name}</p>}
         </div>

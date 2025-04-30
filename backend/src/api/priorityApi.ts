@@ -101,7 +101,7 @@ const priorityApi = new Elysia({ prefix: "/priority" })
         set.status = 400;
         return { success: false, message: "Priority tidak ditemukan" };
       }
-      await priority.destroy();
+      await priority.update({ is_active: 0, deleted_at: new Date() });
       set.status = 200;
       return { success: true, message: "Priority berhasil dihapus" };
     } catch (error) {

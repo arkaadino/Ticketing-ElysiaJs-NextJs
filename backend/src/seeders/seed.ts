@@ -17,6 +17,8 @@ async function seedDatabase() {
             { name: 'Pending', is_active: 1 },
             { name: 'Open', is_active: 1 },
             { name: 'Ongoing', is_active: 1 },
+            { name: 'Dummy1', is_active: 1 },
+            { name: 'Dummy2', is_active: 1 },
         ]);
 
         // Create initial categories

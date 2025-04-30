@@ -14,17 +14,17 @@ import Button from "../ui/button/Button";
 import useTicketing from "@/hooks/useTicketing";
 import { useRouter } from "next/navigation";
 
-export default function ticketingTable() {
+export default function ticketingHistory() {
   const router = useRouter();
-  const { ticketingList, deleteTicketing, fetchTicketing, selectTicketing } = useTicketing();
+  const { ticketingHistoryList, fetchHistory } = useTicketing();
   const [selectedTicketing, setSelectedTicketing] = useState<any>(null);
   const [selectedTicketingId, setSelectedTicketingId] = useState<string | null>(null);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchTicketing();
-  }, [ticketingList]);
+    fetchHistory();
+  }, [ticketingHistoryList]);
 
 
   const closeAddModal = () => {
@@ -34,22 +34,12 @@ export default function ticketingTable() {
   const handleDetailClick = (id: string) => {
     router.push(`/ticketing/detail/${id}`); // ⬅️ push ke halaman detail
   };
-  const formatTanggalKeluhan = (tanggal: string) => {
-    if (!tanggal) return '';
-    const date = new Date(tanggal);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-  
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-  };
-  
+
   return ( 
     <div className="overflow-hidden">
       <div className="max-w-full overflow-x-auto">
         <div className="min-w-[1102px]">
+          
           <Table>
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
@@ -65,7 +55,7 @@ export default function ticketingTable() {
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {ticketingList.map((ticketing, index) => (
+              {ticketingHistoryList.map((ticketing, index) => (
                 <TableRow key={ticketing.id}>
                   <TableCell className="px-5 py-4 sm:px-6 text-start">{index + 1}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
@@ -92,9 +82,7 @@ export default function ticketingTable() {
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{ticketing.Karyawan?.name}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{ticketing.Eskalasi?.name}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{ticketing.keluhan}</TableCell>
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    {formatTanggalKeluhan(ticketing.tanggal_keluhan)}
-                  </TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">{ticketing.tanggal_keluhan}</TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                     <Badge size="sm" color={ticketing.is_active ? "success" : "error"}>
                       {ticketing.is_active ? "Active" : "Inactive"}
@@ -109,13 +97,6 @@ export default function ticketingTable() {
                       >
                         Detail
                       </Button>                    
-                      <Button 
-                        size="sm"
-                        className="px-3 py-1 bg-error-500 text-white rounded hover:bg-error-600 transition" 
-                        onClick={() => deleteTicketing(ticketing.id)}
-                      >
-                        Delete
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

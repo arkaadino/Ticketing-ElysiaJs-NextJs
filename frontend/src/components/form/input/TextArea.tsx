@@ -9,6 +9,7 @@ interface TextareaProps {
   disabled?: boolean; // Disabled state
   error?: boolean; // Error state
   hint?: string; // Hint text to display
+  readOnly?: boolean; // Add the readOnly prop
 }
 
 const TextArea: React.FC<TextareaProps> = ({
@@ -20,9 +21,10 @@ const TextArea: React.FC<TextareaProps> = ({
   disabled = false, // Disabled state
   error = false, // Error state
   hint = "", // Default hint text
+  readOnly = false, // Default readOnly to false
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (onChange) {
+    if (onChange && !readOnly) { // Ensure onChange is called only if not readOnly
       onChange(e.target.value);
     }
   };
@@ -37,6 +39,11 @@ const TextArea: React.FC<TextareaProps> = ({
     textareaClasses += ` bg-transparent text-gray-400 border-gray-300 focus:border-brand-300 focus:ring focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800`;
   }
 
+  // Apply styles for readonly if true
+  if (readOnly) {
+    textareaClasses += ` bg-gray-200 text-gray-600 cursor-not-allowed dark:bg-gray-800 dark:text-gray-400`;
+  }
+
   return (
     <div className="relative">
       <textarea
@@ -45,6 +52,7 @@ const TextArea: React.FC<TextareaProps> = ({
         value={value}
         onChange={handleChange}
         disabled={disabled}
+        readOnly={readOnly} // Add readOnly prop here
         className={textareaClasses}
       />
       {hint && (

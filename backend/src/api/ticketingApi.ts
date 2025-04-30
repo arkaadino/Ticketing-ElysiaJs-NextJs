@@ -20,6 +20,7 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
   
       // Validasi wajib
       if (!body.id_karyawans) errors.id_karyawans = "ID Karyawan harus diisi";
+      if (!body.id_eskalasis) errors.id_eskalasis = "ID Eskalasi harus diisi";
       if (!body.id_categories) {
         errors.id_categories = "ID Kategori harus dipilih";
       } else {
@@ -29,7 +30,16 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
         }
       }
       if (!body.keluhan?.trim()) errors.keluhan = "Keluhan harus diisi";
-  
+      
+      if (Object.keys(errors).length) {
+        set.status = 400;
+        return { 
+          success: false, 
+          message: "Gagal menambahkan karyawan, periksa input!", 
+          errors 
+        };
+      }
+
       // Tambahkan default values yang pasti dibutuhkan
       const ticketData = {
         id_karyawans: body.id_karyawans,
@@ -103,23 +113,81 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
     }
   })
 
-  // GET - Ambil tiket berdasarkan ID
-  .get("/:id", async ({ params, set }: { params: any; set: any }) => {
+  .get("/history", async ({ set }: { set: any }) => {
     try {
-      const ticketing = await Ticketing.findOne({ where: { id: params.id } });
-      if (!ticketing) {
+      const ticketingList = await Ticketing.findAll({
+        where: {is_active: 0},
+        include: [         
+          {
+            model: Karyawan,
+            attributes: ["id", "name"]
+          },
+          {
+            model: Category,
+            attributes: ["id", "name"]
+          },
+          {
+            model: Status,
+            attributes: ["id", "name"]
+          },
+          {
+            model: Eskalasi,
+            attributes: ["id", "name"]
+          }
+        ],
+      });
+      if (!ticketingList.length) {
         set.status = 400;
-        return { success: false, message: "Tiket tidak ditemukan" };
+        return { success: false, message: "Data tidak ditemukan" };
       }
 
       set.status = 200;
-      return { success: true, message: "Data tiket ditemukan", data: ticketing };
+      return { success: true, message: "Data tiket ditemukan", data: ticketingList };
     } catch (error) {
       set.status = 400;
       return { success: false, message: "Gagal mengambil data tiket" };
     }
   })
 
+
+  // GET - Ambil tiket berdasarkan ID
+// GET - Ambil tiket berdasarkan ID
+.get("/:id", async ({ params, set }: { params: any; set: any }) => {
+  try {
+    const ticketing = await Ticketing.findOne({ 
+      where: { id: params.id },
+      include: [         
+        {
+          model: Karyawan,
+          attributes: ["id", "name", "position"] // tambahkan position juga
+        },
+        {
+          model: Category,
+          attributes: ["id", "name"]
+        },
+        {
+          model: Status,
+          attributes: ["id", "name"]
+        },
+        {
+          model: Eskalasi,
+          attributes: ["id", "name"]
+        }
+      ],
+    });
+    
+    if (!ticketing) {
+      set.status = 400;
+      return { success: false, message: "Tiket tidak ditemukan" };
+    }
+
+    set.status = 200;
+    return { success: true, message: "Data tiket ditemukan", data: ticketing };
+  } catch (error) {
+    set.status = 400;
+    return { success: false, message: "Gagal mengambil data tiket" };
+  }
+})
   // PATCH - Update tiket
   .patch("/:id", async ({ params, body, set }: { params: any; body: any; set: any }) => {
     try {
@@ -209,6 +277,7 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
 
   .get('/stats', async () => {
     const completedCount = await Ticketing.count({
+      where: {is_active: 1},
       include: [{
         model: Status,
         where: { name: 'Completed' },
@@ -216,16 +285,89 @@ const ticketingApi = new Elysia({ prefix: "/ticketings" })
     });
   
     const ongoingCount = await Ticketing.count({
+      where: {is_active: 1},
       include: [{
         model: Status,
         where: { name: 'Ongoing' },
       }],
     });
+
+    const openCount = await Ticketing.count({
+      where: {is_active: 1},
+      include: [{
+        model: Status,
+        where: { name: 'Open' },
+      }],
+    });
+
+    const pendingCount = await Ticketing.count({
+      where: {is_active: 1},
+      include: [{
+        model: Status,
+        where: { name: 'Pending' },
+      }],
+    });
+
   
     return {
       completed: completedCount,
       ongoing: ongoingCount,
+      open: openCount,
+      pending: pendingCount,
     };
+
+  })
+
+  .get('/monthly', async ({ set }: { set: any }) => {
+    try {
+      const { Op } = require('sequelize');
+      
+      // Initialize array with zeros for all 12 months
+      const monthlyStats = Array(12).fill(0);
+      
+      // Get current year
+      const currentYear = new Date().getFullYear();
+      
+      // Query all completed tickets with selesai_pengerjaan in the current year
+      const completedTickets = await Ticketing.findAll({
+        where: {
+          selesai_pengerjaan: {
+            [Op.not]: null
+          }
+        },
+        attributes: ['selesai_pengerjaan']
+      });
+      
+      // Count tickets by month
+      completedTickets.forEach(ticket => {
+        if (ticket.selesai_pengerjaan) {
+          const completionDate = new Date(ticket.selesai_pengerjaan);
+          // Check if it's current year (optional - remove if you want all years)
+          if (completionDate.getFullYear() === currentYear) {
+            const month = completionDate.getMonth(); // 0-11 for Jan-Dec
+            monthlyStats[month]++;
+          }
+        }
+      });
+      
+      set.status = 200;
+      return { 
+        success: true, 
+        message: "Monthly ticketing statistics retrieved", 
+        data: monthlyStats 
+      };
+    } catch (error) {
+      console.error("Error retrieving monthly stats:", error);
+      set.status = 500;
+      return { 
+        success: false, 
+        message: "Failed to retrieve monthly statistics",
+        errorDetails: error instanceof Error ? error.message : String(error)
+      };
+    }
   });
+
+  
+
     
 export default ticketingApi;

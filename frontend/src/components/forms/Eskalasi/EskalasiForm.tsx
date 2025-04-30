@@ -61,7 +61,7 @@ export default function AddEskalasiForm({ closeModal }: { closeModal: () => void
 
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
         <div className="col-span-1">
-          <Input value={nik} onChange={(e) => setNik(e.target.value)} placeholder="NIK"/>
+          <Input value={nik} onChange={(e) => setNik(e.target.value)} placeholder="NIK" type="number"/>
           {errors.nik && <p className="text-red-500">{errors.nik}</p>}
         </div>
 
@@ -71,7 +71,7 @@ export default function AddEskalasiForm({ closeModal }: { closeModal: () => void
         </div>
 
         <div className="col-span-1">
-          <Input value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Posisi" />
+          <Input value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Position" />
           {errors.position && <p className="text-red-500">{errors.position}</p>}
         </div>
 
@@ -81,7 +81,7 @@ export default function AddEskalasiForm({ closeModal }: { closeModal: () => void
         </div>
 
         <div className="col-span-1">
-          <Input value={job_title} onChange={(e) => setJobTitle(e.target.value)} placeholder="Jabatan" />
+          <Input value={job_title} onChange={(e) => setJobTitle(e.target.value)} placeholder="Job Title" />
           {errors.job_title && <p className="text-red-500">{errors.job_title}</p>}
         </div>
 

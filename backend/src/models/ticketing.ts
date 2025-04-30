@@ -75,8 +75,7 @@ export class Ticketing extends Model<TicketingEntity> {
             model: Eskalasi,
             key: "id",
         },
-        allowNull: true, // Pastikan ini true
-        defaultValue: null, // Tambahkan ini
+        allowNull: false 
     }) 
     id_eskalasis!: number | null;
     

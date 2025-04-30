@@ -83,7 +83,7 @@ export default function useAuth() {
         setUser(result.user);
       }
 
-      showAlert("Success!", "Selamat Datang!", "success").then(() => {
+      showAlert("Berhasil!", "Selamat Datang!", "success").then(() => {
         window.location.href = "/";
       });
 

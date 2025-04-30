@@ -12,8 +12,9 @@ export const showAlert = (title: string, text: string, icon: "success" | "error"
     title,
     text,
     icon,
-    confirmButtonText: "OK",
-    confirmButtonColor: icon === "error" ? "#ac2f1d" : "#2c9830",
+    showConfirmButton: false,  // Menghilangkan tombol konfirmasi
+    timer: 5000,               // Alert hilang otomatis setelah 3 detik
+    timerProgressBar: true,    // Menampilkan progress bar
   });
 };
 

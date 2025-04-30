@@ -67,6 +67,7 @@ export default function EditEskalasiForm({ id, initialData, closeModal }: Eskala
           onChange={(e) => setNik(e.target.value)} 
           placeholder="NIK"
           hint={`Original: ${initialData?.nik || 'None'}`}
+          type="number"
           />
           {errors.nik && <p className="text-red-500">{errors.nik}</p>}
         </div>
@@ -85,7 +86,7 @@ export default function EditEskalasiForm({ id, initialData, closeModal }: Eskala
           <Input 
           value={position} 
           onChange={(e) => setPosition(e.target.value)} 
-          placeholder="Posisi" 
+          placeholder="Position" 
           hint={`Original: ${initialData?.position || 'None'}`}
           />
           {errors.position && <p className="text-red-500">{errors.position}</p>}
@@ -105,7 +106,7 @@ export default function EditEskalasiForm({ id, initialData, closeModal }: Eskala
           <Input 
           value={job_title} 
           onChange={(e) => setJobTitle(e.target.value)} 
-          placeholder="Jabatan" 
+          placeholder="Job Title" 
           hint={`Original: ${initialData?.job_title || 'None'}`}
           />
           {errors.job_title && <p className="text-red-500">{errors.job_title}</p>}

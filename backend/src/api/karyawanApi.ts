@@ -17,7 +17,7 @@ const karyawanApi = new Elysia({ prefix: "/karyawan" })
 
       if (!body.nik) errors.nik = "NIK harus diisi";
       if (!body.name?.trim()) errors.name = "Nama harus diisi";
-      if (!body.position?.trim()) errors.position = "Jabatan harus diisi";
+      if (!body.position?.trim()) errors.position = "Position harus diisi";
       if (!body.unit_kerja?.trim()) errors.unit_kerja = "Unit kerja harus diisi";
       if (!body.job_title?.trim()) errors.job_title = "Job title harus diisi";
       if (!body.is_active || ![1, 0].includes(body.is_active)) errors.is_active = "Status keaktifan harus diisi";
@@ -94,7 +94,6 @@ const karyawanApi = new Elysia({ prefix: "/karyawan" })
     try {
       const karyawan = await Karyawan.findOne({
         where: { id: params.id, is_active: 1 },
-        attributes: { include: ["password"] }, // ✅ Ensure password is included
       });
   
       if (!karyawan) {

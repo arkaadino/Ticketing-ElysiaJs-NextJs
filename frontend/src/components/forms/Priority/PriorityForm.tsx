@@ -46,17 +46,17 @@ export default function AddPriorityForm({ closeModal }: { closeModal: () => void
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <h4 className="mb-6 text-lg font-medium text-gray-800 dark:text-white/90">
-        Tambah Priority
+        Tambah Priorities
       </h4>
 
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
         <div className="col-span-1">  
-          <Input value={sla} onChange={(e) => setSla(e.target.value)} placeholder="SLA"/>
+          <Input value={sla} onChange={(e) => setSla(e.target.value)} placeholder="SLA" type="number"/>
           {errors.sla && <p className="text-red-500">{errors.sla}</p>}
         </div>
 
         <div className="col-span-1">
-          <Input value={level} onChange={(e) => setLevel(e.target.value)} placeholder="Level" />
+          <Input value={level} onChange={(e) => setLevel(e.target.value)} placeholder="Level" type="number"/>
           {errors.level && <p className="text-red-500">{errors.level}</p>}
         </div>
 

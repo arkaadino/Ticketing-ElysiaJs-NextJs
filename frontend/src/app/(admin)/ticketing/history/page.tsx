@@ -1,6 +1,6 @@
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import TicketingTable from "@/components/tables/TicketingTable";
+import TicketingHistoryTable from "@/components/tables/TicketingHistoryTable";
 import { Metadata } from "next";
 
 import React from "react";
@@ -14,10 +14,10 @@ export const metadata: Metadata = {
 export default function BasicTables() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="Ticketing" />
+      <PageBreadcrumb pageTitle="History Ticketing" />
       <div className="space-y-6">
-        <ComponentCard title="Ticketing">
-          <TicketingTable />
+        <ComponentCard title="History Ticketing ">
+          <TicketingHistoryTable />
         </ComponentCard>
       </div>
     </div>

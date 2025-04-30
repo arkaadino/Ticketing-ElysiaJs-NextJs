@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { showAlert, showConfirm } from "../components/ui/swal/swal"; // Corrected import path
-import { error } from "console";
+import { showAlert, showConfirm } from "../components/ui/swal/swal";
 import { fetchWithRefresh } from "@/utils/api";
 
 export default function useEskalasi() {
@@ -9,43 +8,33 @@ export default function useEskalasi() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchEskalasi(); // Fetch Eskalasi data on initial load
+    fetchEskalasi();
   }, []);
 
-  // Fetch all active Eskalasi
   const fetchEskalasi = async () => {
     try {
       setLoading(true);
-
-      const response = await fetchWithRefresh(
-        `${process.env.NEXT_PUBLIC_API_URL}/eskalasi`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-
+      const response = await fetchWithRefresh(`${process.env.NEXT_PUBLIC_API_URL}/eskalasi`, {
+        method: "GET",
+        credentials: "include",
+      });
       const result = await response.json();
 
       if (result.success) {
-        // Data ada
         setEskalasiList(result.data);
       } else if (result.message !== "Data tidak ditemukan") {
-        // Hanya munculkan alert kalau error-nya bukan "Data tidak ditemukan"
         showAlert("Error!", result.message, "error");
       } else {
-        // Kalau memang kosong, set jadi array kosong tanpa alert
         setEskalasiList([]);
       }
     } catch (error) {
       console.error("Failed to fetch eskalasi:", error);
-      console.error("Error details:", JSON.stringify(error));
       showAlert("Error!", "Failed to fetch eskalasi!", "error");
     } finally {
       setLoading(false);
     }
-  };  
-// Select a specific Eskalasi by ID
+  };
+
   const selectEskalasi = useCallback(async (id: string): Promise<any | null> => {
     setLoading(true);
     try {
@@ -53,25 +42,24 @@ export default function useEskalasi() {
         method: "GET",
         credentials: "include",
       });
-
       const result = await response.json();
+
       if (result.success) {
         setEskalasi(result.data || null);
-        return result.data; // Return the data
+        return result.data;
       } else {
         showAlert("Error!", result.message, "error");
         return null;
       }
     } catch (error) {
       console.error("Failed to fetch eskalasi:", error);
-      showAlert("Error!", "Failed to fetch Eskalasi!", "error");
+      showAlert("Error!", "Failed to fetch eskalasi!", "error");
       return null;
     } finally {
       setLoading(false);
     }
   }, []);
 
-// 🔥 Tambah Eskalasi baru
   const addEskalasi = async (data: any) => {
     setLoading(true);
     try {
@@ -81,32 +69,27 @@ export default function useEskalasi() {
         credentials: "include",
         body: JSON.stringify(data),
       });
-
       const result = await response.json();
-      setLoading(false);
 
       if (!response.ok) {
         if (result.errors) {
           return { success: false, errors: result.errors };
         }
-        
         showAlert("Gagal!", result.message, "error");
         return { success: false, errors: {} };
       }
 
-      showAlert("Berhasil!", "Eskalasi berhasil ditambahkan.", "success").then(() => {
-        fetchEskalasi(); // Refresh data
-      });
-
+      showAlert("Berhasil!", "Eskalasi berhasil ditambahkan.", "success").then(fetchEskalasi);
       return { success: true, errors: {} };
     } catch (error) {
       console.error("Gagal menambahkan eskalasi:", error);
-      setLoading(false);
       showAlert("Error!", "Terjadi kesalahan, coba lagi!", "error");
       return { success: false, errors: {} };
+    } finally {
+      setLoading(false);
     }
   };
-  // Update an existing Eskalasi
+
   const updateEskalasi = async (id: string, data: any) => {
     setLoading(true);
     try {
@@ -116,36 +99,30 @@ export default function useEskalasi() {
         credentials: "include",
         body: JSON.stringify(data),
       });
-
       const result = await response.json();
+
       if (!response.ok) {
-
         if (result.errors) {
-          return {success: false, errors: result.errors};
+          return { success: false, errors: result.errors };
         }
-
-        showAlert("Failed!", result.message, "error");
-        return {success: false, errors: {}};
+        showAlert("Gagal!", result.message, "error");
+        return { success: false, errors: {} };
       }
 
-      showAlert("Success!", "Eskalasi data updated", "success").then(() => {
-        fetchEskalasi();
-      });
-
-      return {success: true, errors: {}};
+      showAlert("Berhasil!", "Eskalasi berhasil diperbarui.", "success").then(fetchEskalasi);
+      return { success: true, errors: {} };
     } catch (error) {
-      console.error("Failed to update eskalasi:", error);
-      showAlert("Error!", "An error occurred, please try again!", "error");
-      return false;
+      console.error("Gagal memperbarui eskalasi:", error);
+      showAlert("Error!", "Terjadi kesalahan, coba lagi!", "error");
+      return { success: false, errors: {} };
     } finally {
       setLoading(false);
     }
   };
 
-  // Soft delete a Eskalasi
   const deleteEskalasi = async (id: string) => {
-    const confirm = await showConfirm("Confirmation", "Are you sure you want to delete this Eskalasi?");
-    if (!confirm) return;
+    const confirm = await showConfirm("Konfirmasi", "Yakin ingin menghapus eskalasi ini?");
+    if (!confirm) return false;
 
     setLoading(true);
     try {
@@ -153,26 +130,32 @@ export default function useEskalasi() {
         method: "DELETE",
         credentials: "include",
       });
-
       const result = await response.json();
+
       if (!response.ok) {
-        showAlert("Failed!", result.message, "error");
+        showAlert("Gagal!", result.message, "error");
         return false;
       }
 
-      showAlert("Success!", "Eskalasi deleted", "success").then(() => {
-        fetchEskalasi();
-      });
-
+      showAlert("Berhasil!", "Eskalasi berhasil dihapus.", "success").then(fetchEskalasi);
       return true;
     } catch (error) {
-      console.error("Failed to delete eskalasi:", error);
-      showAlert("Error!", "An error occurred, please try again!", "error");
+      console.error("Gagal menghapus eskalasi:", error);
+      showAlert("Error!", "Terjadi kesalahan, coba lagi!", "error");
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return { eskalasiList, eskalasi, loading, fetchEskalasi, addEskalasi, updateEskalasi, deleteEskalasi, selectEskalasi };
+  return {
+    eskalasiList,
+    eskalasi,
+    loading,
+    fetchEskalasi,
+    addEskalasi,
+    updateEskalasi,
+    deleteEskalasi,
+    selectEskalasi,
+  };
 }

@@ -1,28 +1,24 @@
 import { useState } from "react";
 import Button from "../../ui/button/Button";
-import Label from "../../form/Label";
-import Input from "../../form/input/InputField";
 import Select from "../../form/Select";
 import useTicketing from "@/hooks/useTicketing";
 import useKaryawan from "@/hooks/useKaryawan";
 import useCategories from "@/hooks/useCategories";
-import usePriority from "@/hooks/usePriority";
-import useStatuses from "@/hooks/useStatuses";
+import useEskalasi from "@/hooks/useEskalasi";
 import TextArea from "@/components/form/input/TextArea";
-import useAuth from "@/hooks/useAuth";
+import SearchableSelect from "@/components/form/SearchableSelect";
 
 export default function AddTicketingForm({ closeModal }: { closeModal: () => void }) {
   const { addTicketing, loading: ticketingLoading } = useTicketing();
   const { karyawanList, loading: karyawanLoading } = useKaryawan();
   const { categoriesList, loading: categoryLoading } = useCategories();
-  const { priorityList, loading: priorityLoading } = usePriority();
-  const { user } = useAuth();
-  const [id_karyawans, setIdKaryawans] = useState(0);
+  const { eskalasiList, loading: eskalasiLoading } = useEskalasi();
+  const [id_eskalasis, setIdEskalasis] = useState(0);
   const [id_categories, setIdCategories] = useState(0);
   const [id_priorities, setIdPriorities] = useState(0);
+  const [id_karyawans, setIdKaryawans] = useState(0);
   const [id_statuses] = useState(3); // status "Open"
   const [keluhan, setKeluhan] = useState("");
-  const [eskalasi, setEskalasi] = useState(user?.id || null); // ambil dari user login
   const [response, setResponse] = useState("");
   const [analisa, setAnalisa] = useState("");
   const [is_active, setIsActive] = useState<number | null>(1); // Default to active
@@ -35,14 +31,14 @@ export default function AddTicketingForm({ closeModal }: { closeModal: () => voi
       id_karyawans: Number(id_karyawans),
       id_categories: Number(id_categories),
       id_priorities: Number(id_priorities),
+      id_eskalasis: Number(id_eskalasis),
       id_statuses: Number(id_statuses || 3),
       keluhan,
-      eskalasi,
       response,
       analisa,
       is_active: is_active ? 1 : 0,
     };
-
+    
     const result = await addTicketing(formData);
   
     if (result.success) {
@@ -59,7 +55,7 @@ export default function AddTicketingForm({ closeModal }: { closeModal: () => voi
   };
 
   // Loading status dari semua hook
-  const loading = ticketingLoading || karyawanLoading || categoryLoading || priorityLoading;
+  const loading = ticketingLoading || karyawanLoading || categoryLoading  || eskalasiLoading;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -82,24 +78,25 @@ export default function AddTicketingForm({ closeModal }: { closeModal: () => voi
 
         <div className="col-span-1">
           <Select
-            options={priorityList.map((priority) => ({
-              value: String(priority.id),
-              label: `${priority.sla} - ${priority.level}`,
+            options={eskalasiList.map((e) => ({
+              value: String(e.id),
+              label: e.name,
             }))}
-            onChange={(value) => setIdPriorities(Number(value))}
-            placeholder="Pilih Prioritas"
+            onChange={(value) => setIdEskalasis(Number(value))}
+            placeholder="Pilih Eskalasi"
           />
-          {errors.id_priorities && <p className="text-red-500">{errors.id_priorities}</p>}
+          {errors.id_eskalasis && <p className="text-red-500">{errors.id_eskalasis}</p>}
         </div>
 
         <div className="col-span-2">
-          <Select
+          <SearchableSelect
             options={karyawanList.map((karyawan) => ({
               value: String(karyawan.id),
               label: karyawan.name,
             }))}
             onChange={(value) => setIdKaryawans(Number(value))}
             placeholder="Pilih Karyawan"
+            className="w-full"
           />
           {errors.id_karyawans && <p className="text-red-500">{errors.id_karyawans}</p>}
         </div>
@@ -113,9 +110,6 @@ export default function AddTicketingForm({ closeModal }: { closeModal: () => voi
           {errors.keluhan && <p className="text-red-500">{errors.keluhan}</p>}
         </div>
       </div>
-
-      {/* Hidden Input for eskalasi */}
-      <input type="hidden" value={eskalasi ?? ""} />
 
       <div className="flex items-center justify-end w-full gap-3 mt-6">
         <Button 

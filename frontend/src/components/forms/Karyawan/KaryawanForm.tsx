@@ -15,7 +15,6 @@ export default function AddKaryawanForm({ closeModal }: { closeModal: () => void
   const [position, setPosition] = useState("");
   const [unit_kerja, setUnitKerja] = useState("");
   const [job_title, setJobTitle] = useState("");
-  const [role, setRole] = useState("");
   const [password, setPassword] = useState("");
   const [is_active, setIsActive] = useState<number | null>(null);
   const [id_priorities, setIdPriorities] = useState(0);
@@ -33,8 +32,6 @@ export default function AddKaryawanForm({ closeModal }: { closeModal: () => void
       position,
       unit_kerja,
       job_title,
-      role,
-      password: role === "admin" ? password : undefined,
       is_active: is_active ? 1 : 0,
       id_priorities: Number(id_priorities),
     };
@@ -65,7 +62,7 @@ export default function AddKaryawanForm({ closeModal }: { closeModal: () => void
 
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
         <div className="col-span-1">
-          <Input value={nik} onChange={(e) => setNik(e.target.value)} placeholder="NIK"/>
+          <Input value={nik} onChange={(e) => setNik(e.target.value)} placeholder="NIK" type="number"/>
           {errors.nik && <p className="text-red-500">{errors.nik}</p>}
         </div>
 
@@ -88,25 +85,6 @@ export default function AddKaryawanForm({ closeModal }: { closeModal: () => void
           <Input value={job_title} onChange={(e) => setJobTitle(e.target.value)} placeholder="Jabatan" />
           {errors.job_title && <p className="text-red-500">{errors.job_title}</p>}
         </div>
-
-        <div className="col-span-1">
-          <Select
-            options={[
-              { value: "admin", label: "Admin" },
-              { value: "employee", label: "Employee" },
-            ]}
-            onChange={(value) => setRole(value)}
-            placeholder="Pilih Role yang Tepat"
-          />
-          {errors.role && <p className="text-red-500">{errors.role}</p>}
-        </div>
-
-        {role === "admin" && (
-          <div className="col-span-1">
-            <Input value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" type="password" />
-            {errors.password && <p className="text-red-500">{errors.password}</p>}
-          </div>
-        )}
 
         <div className="col-span-1">
           <Select

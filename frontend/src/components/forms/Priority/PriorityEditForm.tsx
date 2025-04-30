@@ -44,7 +44,7 @@ export default function EditPriorityForm({ id, initialData, closeModal }: { id: 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <h4 className="mb-6 text-lg font-medium text-gray-800 dark:text-white/90">
-        Edit Priority
+        Edit Priorities
       </h4>
 
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
@@ -54,6 +54,7 @@ export default function EditPriorityForm({ id, initialData, closeModal }: { id: 
             onChange={(e) => setSla(e.target.value)} 
             placeholder="SLA"
             hint={`Original: ${initialData?.sla || 'none'}`}
+            type="number"
           />
           {errors.sla && <p className="text-red-500">{errors.sla}</p>}
         </div>
@@ -65,6 +66,7 @@ export default function EditPriorityForm({ id, initialData, closeModal }: { id: 
             setLevel(e.target.value)} 
             placeholder="Level" 
             hint={`Original: ${initialData?.level || 'none'}`}
+            type="number"
           />
           {errors.level && <p className="text-red-500">{errors.level}</p>}
         </div>
